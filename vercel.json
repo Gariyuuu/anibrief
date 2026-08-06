@@ -1,0 +1,11 @@
+{
+  "crons": [
+    { "path": "/api/cron/refresh-airing", "schedule": "*/20 * * * *" },
+    { "path": "/api/cron/refresh-news", "schedule": "*/20 * * * *" },
+    { "path": "/api/cron/refresh-seasonal", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/birthdays", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/trend-snapshot", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/daily-brief", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/notifications", "schedule": "*/30 * * * *" }
+  ]
+}

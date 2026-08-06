@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------
+   AniBrief theme tokens.
+   Base palette: neutral ink/paper (no default "SaaS purple"). A single
+   accent color drives interactive/brand moments and is swappable via
+   `data-accent` on <html> — see src/lib/theme.ts for the option list.
+--------------------------------------------------------------------- */
+:root {
+  --background: #f6f3ec;
+  --surface: #ffffff;
+  --surface-raised: #fffdf8;
+  --border: #e5e0d3;
+  --foreground: #18140f;
+  --muted: #6f6a5d;
+  --positive: #2f8f5b;
+  --negative: #c0392b;
+  --link: #1a56db;
+
+  /* accent defaults (sakura) — overridden per data-accent below */
+  --accent: #d95c85;
+  --accent-foreground: #1f0611;
+  --accent-soft: #d95c8524;
+}
+
+.dark {
+  --background: #0c0c10;
+  --surface: #131318;
+  --surface-raised: #17171e;
+  --border: #26262f;
+  --foreground: #ece9e4;
+  --muted: #94907f;
+  --positive: #3fbf7f;
+  --negative: #ef5350;
+  --link: #6ea0ff;
+
+  --accent: #ea82a5;
+  --accent-foreground: #1f0611;
+  --accent-soft: #ea82a52a;
+}
+
+/* --- Accent themes --- */
+[data-accent="sakura"] {
+  --accent: #d95c85;
+  --accent-foreground: #1f0611;
+}
+.dark[data-accent="sakura"] {
+  --accent: #ea82a5;
+  --accent-foreground: #1f0611;
+}
+
+[data-accent="midnight"] {
+  --accent: #4f6fd6;
+  --accent-foreground: #f5f7ff;
+}
+.dark[data-accent="midnight"] {
+  --accent: #7c93ec;
+  --accent-foreground: #04081a;
+}
+
+[data-accent="ocean"] {
+  --accent: #17879c;
+  --accent-foreground: #f2fdff;
+}
+.dark[data-accent="ocean"] {
+  --accent: #3fb5cc;
+  --accent-foreground: #001417;
+}
+
+[data-accent="ember"] {
+  --accent: #c85a26;
+  --accent-foreground: #fff6ef;
+}
+.dark[data-accent="ember"] {
+  --accent: #e57a3f;
+  --accent-foreground: #1a0a00;
+}
+
+[data-accent="matcha"] {
+  --accent: #5c7f3f;
+  --accent-foreground: #f4faee;
+}
+.dark[data-accent="matcha"] {
+  --accent: #85ab5f;
+  --accent-foreground: #08130a;
+}
+
+[data-accent="violet"] {
+  --accent: #6f52c2;
+  --accent-foreground: #f7f4ff;
+}
+.dark[data-accent="violet"] {
+  --accent: #9a7fe0;
+  --accent-foreground: #0d0417;
+}
+
+[data-accent="monochrome"] {
+  --accent: #18140f;
+  --accent-foreground: #f6f3ec;
+}
+.dark[data-accent="monochrome"] {
+  --accent: #ece9e4;
+  --accent-foreground: #0c0c10;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-link: var(--link);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Subtle screentone/halftone texture for hero + editorial surfaces. Kept
+   very low-contrast so it reads as paper grain, not decoration. */
+.halftone {
+  background-image: radial-gradient(var(--foreground) 0.5px, transparent 0.5px);
+  background-size: 10px 10px;
+  opacity: 0.05;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
