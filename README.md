@@ -2,6 +2,8 @@
 
 **Your daily briefing for anime, manga, music, and more.**
 
+**Live:** [anibrief.vercel.app](https://anibrief.vercel.app)
+
 A personalized daily briefing terminal for anime fans — episode tracking, seasonal browsing,
 manga and OST discovery, voice-actor birthdays, industry news, and a generated daily brief,
 built on the architecture of the sibling **MarketBrief** project (a finance-news dashboard) but

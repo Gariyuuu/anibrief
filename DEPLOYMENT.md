@@ -73,13 +73,14 @@ automatically on deploy and sends `CRON_SECRET` as a Bearer token to each `/api/
 
 ## Vercel plan note: Cron frequency
 
-`vercel.json` registers 7 scheduled jobs, several every 20–30 minutes. **Vercel's free Hobby
-plan restricts cron jobs to a maximum of once per day** — the sub-hourly schedules here
-(`refresh-airing`, `refresh-news`, `refresh-notifications`) require a **Pro** plan to run at
-their configured frequency. On Hobby, either upgrade, or edit `vercel.json` to daily schedules
-before deploying (the routes themselves work fine at any frequency — this is purely a Vercel
-plan limit, not a code limitation). Every cron route is also safely callable manually/more
-often than scheduled (each has its own idempotency lock), so this doesn't block local testing.
+`vercel.json`'s 7 scheduled jobs currently run **once daily, staggered across the day**
+(`birthdays` 00:00 UTC, `refresh-airing` 01:00, `refresh-news` 03:00, `refresh-seasonal` 05:00,
+`notifications` 09:00, `trend-snapshot` 12:00, `daily-brief` 13:00) — this is what's actually
+live in production. **Vercel's free Hobby plan restricts cron jobs to a maximum of once per
+day**, so this schedule was deliberately chosen to deploy cleanly on Hobby; the original design
+intent (airing/news refreshed every 20–30 minutes, notifications every 30) needs a **Pro** plan.
+If you upgrade, restore the tighter schedule in `vercel.json` — the routes themselves work at
+any frequency (each has its own idempotency lock), this is purely a Vercel plan limit.
 
 ## 6. New-project checklist (Vercel-specific gotchas)
 
