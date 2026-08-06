@@ -3,6 +3,16 @@
 All notable changes to AniBrief are documented here. This file also powers the in-app
 "What's New" page (`/whats-new`).
 
+## 0.1.2 — Sign-up CAPTCHA fix
+
+### Fixed
+
+- **Sign-up failed with "The CAPTCHA failed to load"** for every visitor, not just a specific
+  browser. Clerk's bot-protection CAPTCHA (Cloudflare Turnstile) loads its script/iframe from
+  `challenges.cloudflare.com`, which the Content-Security-Policy added in 0.1.1 didn't allowlist
+  — so the browser silently blocked it. Added `challenges.cloudflare.com` to `script-src`,
+  `frame-src`, and `connect-src` in `next.config.ts`.
+
 ## 0.1.1 — Security fix + deployment
 
 ### Fixed

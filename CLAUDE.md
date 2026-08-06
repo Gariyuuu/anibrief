@@ -1,420 +1,412 @@
 # CLAUDE.md — Operating Manual for AniBrief
 
-> **SECOND, LARGER wave of concurrent change observed after this
-> audit's snapshot was locked:** by ~06:15 MST (while this
-> documentation was still being written), the repo had grown from ~90
-> to ~176 files, gaining a home page, most nav routes, most
-> `/api/cron/*` routes, real tests, and a real `.env.example` — several
-> specific claims below (no home page, no tests, no `.env.example`, no
-> cron routes) are very likely **already false**. See
-> `PROJECT_STATE.md`'s "ADDENDUM" section and `SESSION_LOG.md`'s
-> addendum entry before trusting specifics in this file. A fresh audit
-> pass is recommended before relying on this file's "Current status."
-
-> **Audit note (2026-08-06):** This file (and the 16 sibling memory files
-> it references) were produced by a documentation-audit pass. During that
-> audit, this repository was observed under **active, continuous
-> concurrent modification by a separate process** for the entire session
-> (roughly 05:49–05:59 MST) — an auth layer, database layer, AI layer,
-> and ~30 UI/component/action files were added live while the audit was
-> being written. Nothing in this file was invented: every claim below was
-> verified against the repository content at the final snapshot taken at
-> **2026-08-06 05:59:28 MST**. But because the repo was a moving target,
-> **re-verify file counts, lint/typecheck results, and route lists before
-> relying on specifics** — see `PROJECT_STATE.md` for the full account.
-> No application behavior was intentionally changed by the audit itself;
-> see `SESSION_LOG.md` for exactly what was and wasn't touched.
+> **Re-sync note (2026-08-06, ~15:35 MST):** the previous documentation pass (written
+> ~05:59–06:15 MST the same day) was locked against a snapshot that turned out to be
+> mid-flight — the repo kept growing (concurrent development) right up until it was
+> committed. Two commits have since landed: `0a1de43` ("Initial release: AniBrief
+> v0.1.1", ~176 files) and `1d1eef9` ("0.1.1: fix admin auth bypass + daily-brief RSC
+> crash, deploy to Vercel"). This file, and its 16 sibling memory files, have now been
+> re-verified against the actual current committed code (git-tracked, 225 files),
+> not against the earlier snapshot. See `SESSION_LOG.md`'s newest entry for exactly
+> what was re-checked and how.
 
 ## Project identity
 
-**AniBrief** is a Next.js web app: "a daily briefing terminal for anime,
-manga, Japanese music, voice-actor news, episode tracking, and
-discovery" (per `src/app/manifest.ts` and `layout.tsx` metadata). It
-aggregates data from AniList, Jikan/MyAnimeList, Google News RSS, and
-YouTube into a personalized daily brief, episode calendar, news feed,
-and watch/read list, with optional AI-generated summaries.
+**AniBrief** is a Next.js web app: "a daily briefing terminal for anime, manga,
+Japanese music, voice-actor news, episode tracking, and discovery" (per
+`src/app/manifest.ts` and `layout.tsx` metadata). It aggregates data from AniList,
+Jikan/MyAnimeList, Google News RSS, and YouTube into a personalized daily brief,
+episode calendar, news feed, and watch/read list, with optional AI-generated
+summaries. **It is live and deployed:** https://anibrief.vercel.app.
 
 Working directory for all commands: `/Users/gariyuu/Projects/anibrief`.
 
-Comment markers throughout the code (`per spec §5`, `§9`, `§21`, `§22`,
-`§25`, `§42`, etc.) reference an external product spec that is **not
-present in this repository** — it could not be located anywhere under
-`anibrief/`. Treat those section numbers as evidence of intent, not as
-something you can open and read.
+Comment markers throughout the code (`per spec §5`, `§9`, `§21`, `§22`, `§25`, `§42`,
+etc.) reference an external product spec that is **not present in this repository** —
+it could not be located anywhere under `anibrief/`. Treat those section numbers as
+evidence of intent, not as something you can open and read.
 
 ## Current status
 
-As of the final audit snapshot (2026-08-06 05:59 MST), AniBrief is
-**early-stage / actively under construction**, not deployed, not
-runnable as a real product yet:
+As of this re-sync (2026-08-06, git HEAD `1d1eef9`), AniBrief is **a working, deployed
+product**, not the early-stage scaffold the earlier documentation pass described:
 
-- **No git history.** `anibrief/` has no `.git` of its own. The nearest
-  repository is the parent `~/Projects` folder, which itself has zero
-  commits — the entire `anibrief/` tree is untracked, uncommitted
-  content. There is no way to `git diff`/`git log` this project's history.
-- **No deployed instance.** No evidence of a live URL anywhere in the
-  repo (no Vercel project link, no README with a URL).
-- **Zero user-facing pages exist** except Clerk's default
-  `/sign-in/[[...sign-in]]` and `/sign-up/[[...sign-up]]`. There is no
-  `src/app/page.tsx` (home page), and none of the 15 routes declared in
-  `src/lib/nav.ts` (`/daily-brief`, `/news`, `/airing`, `/seasonal`,
-  `/anime`, `/manga`, `/music`, `/people`, `/calendar`, `/discover`,
-  `/my-list`, `/alerts`, `/profile`, `/settings`) have a `page.tsx`.
-  There's also no custom `not-found.tsx` or `error.tsx`.
-- **A substantial supporting layer already exists** despite the above:
-  data providers (AniList, Jikan, MyAnimeList stub, YouTube, news RSS,
-  streaming-link derivation, curated music), a full Drizzle/Neon schema
-  (18 tables), Clerk auth wiring (root layout, proxy/middleware,
-  sign-in/up pages), an AI summary layer (Anthropic/OpenAI, with
-  template fallback), a component library (`ui/`, `layout/`, `home/`,
-  `anime/`, `news/`, `actions/`), and several Clerk-gated server actions
-  for lists/alerts/follows/profile. None of it is reachable by a real
-  user yet because there's no page to render it.
-- **`lint` currently fails** (5 errors, 3 warnings) as of the final
-  snapshot — all in files added during the concurrent build (see
-  `TESTING.md` and `TASKS.md`). **`typecheck` passes clean.** `build`
-  was run once during the audit and succeeded, but see the "DO NOT
-  CHANGE WITHOUT REVIEW" note below about running `build` again.
-- **No tests exist.** `npm test` runs a glob that currently matches zero
-  files (0/0/0 pass/fail/skip — not a failure, just empty).
-- **No `.env.example`** exists anywhere in the repo, despite
-  `.gitignore` special-casing `!.env.example`. Environment variables are
-  documented only in code comments and in this file.
+- **Real git history exists.** `anibrief/` is tracked inside the `~/Projects` parent
+  repo, on branch `main`, 2 commits, working tree clean (`git status` → nothing to
+  commit) as of this re-sync. `git log --oneline`: `1d1eef9` (auth/RSC fixes + deploy)
+  on top of `0a1de43` (initial release).
+- **Deployed to Vercel**, live at https://anibrief.vercel.app, with Clerk auth and a
+  Neon Postgres database provisioned through Vercel's integration (schema pushed).
+- **Every route in `src/lib/nav.ts` (15 items) has a real `page.tsx`.** `npm run build`
+  produces 44 routes total: 34 `page.tsx` pages (including nested `anime/[id]`/
+  `manga/[id]` tab routes, `daily-brief/archive/[date]`, `settings/import`,
+  `sign-in`/`sign-up`), 1 middleware/proxy, the rest API/cron/icon/manifest routes.
+  There is no longer a "nothing renders" problem — see `FEATURES.md` for
+  feature-by-feature verification.
+- **All 7 `/api/cron/*` routes exist and are real**, each wrapped in
+  `src/lib/cron/runCronJob.ts`'s idempotency lock (backed by the `sync_jobs` table),
+  matching every schedule declared in `vercel.json`.
+- **Real tests exist and pass**: 24/24 (`src/lib/dedup/__tests__/*`,
+  `src/lib/providers/anilist/__tests__/mappers.test.ts`,
+  `src/lib/providers/news/__tests__/reliability.test.ts`,
+  `src/lib/utils/__tests__/{dates,season}.test.ts`).
+- **A real `.env.example` exists**, comprehensive, no secrets, matches this file's env
+  var table.
+- **`npm run lint` passes clean** (0 errors, 0 warnings) — the earlier snapshot's 5
+  `react-hooks/set-state-in-effect` errors were fixed with targeted
+  `eslint-disable-next-line` comments (see `ThemeToggle.tsx`, `AccentPicker.tsx`,
+  `CommandPalette.tsx`, `EpisodeTimeline.tsx`); the 3 unused-import warnings are gone.
+- **`npm run typecheck` passes clean.**
+- **`npm run build` succeeds** (verified this re-sync; ~44 routes, 11.9s static-page
+  generation).
+- Two real production bugs were found and fixed on top of the initial release (commit
+  `1d1eef9`): an **admin-dashboard auth bypass** (a signed-out request could briefly
+  receive rendered `/admin` content before a layout-level `redirect()` took effect,
+  due to an RSC-streaming timing quirk in this Next.js version — fixed by also
+  blocking `/admin` in `src/proxy.ts` middleware, before any rendering starts) and a
+  **Daily Brief page crash** (a Server Component was passing a render-prop function
+  into a Client Component, which isn't serializable across that boundary — fixed by
+  restructuring `DailyBriefView`/`BriefModeToggle` to pass only plain data down).
+- **Locally, this environment has Clerk + a real `DATABASE_URL` configured** (via
+  Vercel's Neon integration — confirmed by variable *names* only in `.env.local`, not
+  values). **No AI key** (`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`), **no
+  `YOUTUBE_API_KEY`**, **no `ADMIN_USER_IDS`**, **no `CRON_SECRET`** are set locally —
+  those features run in their documented graceful-degradation/"not configured" paths
+  in this environment (production may differ; not verified from inside this session).
+- **`package.json`'s `"version"` field still reads `0.1.0`**, while the changelog and
+  both commit messages call this `0.1.1` — a real, minor inconsistency, left as-is
+  (bumping it would be an application-file change outside this doc-only re-sync's
+  scope). Flag it if you touch `package.json` for any other reason.
 
 ## Technology stack
 
-Versions below are copied verbatim from `package.json` at the final
-snapshot — do not assume newer/older versions without re-checking.
+Versions below are copied verbatim from `package.json` at the current commit.
 
-- **Framework:** Next.js `16.2.11`, App Router, Turbopack (default dev/build
-  engine per the build output). `AGENTS.md` explicitly warns this Next.js
-  version has **breaking changes vs. what you may know** — most notably
-  `middleware.ts` is renamed to `proxy.ts` (exported function `proxy`,
-  see `src/proxy.ts`). Read `node_modules/next/dist/docs/` before
-  assuming standard Next.js behavior.
+- **Framework:** Next.js `16.2.11`, App Router, Turbopack (default dev/build engine
+  per the build output). `AGENTS.md` explicitly warns this Next.js version has
+  **breaking changes vs. what you may know** — most notably `middleware.ts` is
+  renamed to `proxy.ts` (exported function `proxy`, wired via `clerkMiddleware()`; see
+  `src/proxy.ts`, which now also enforces the `/admin` auth gate — see "Current
+  status"). Read `node_modules/next/dist/docs/` before assuming standard Next.js
+  behavior.
 - **UI:** React `19.2.4`, React DOM `19.2.4`.
 - **Language:** TypeScript `^5`, `strict: true` (see `tsconfig.json`).
-- **Styling:** Tailwind CSS `^4` via `@tailwindcss/postcss`, CSS custom
-  properties for theming (`src/app/globals.css`).
+- **Styling:** Tailwind CSS `^4` via `@tailwindcss/postcss`, CSS custom properties for
+  theming (`src/app/globals.css`).
 - **Auth:** `@clerk/nextjs ^7.6.5`.
-- **Database:** `@neondatabase/serverless ^0.10.4` (Neon Postgres, HTTP
-  driver) + `drizzle-orm ^0.36.4` + `drizzle-kit ^0.28.1` (dev).
-- **AI:** `@anthropic-ai/sdk ^0.112.5`, `openai ^6.48.0` — dual-provider,
-  optional, template-fallback if neither key is set.
-- **Email:** `resend ^6.18.0` is a dependency but has **zero references**
-  anywhere in `src/` — installed, not integrated.
+- **Database:** `@neondatabase/serverless ^0.10.4` (Neon Postgres, HTTP driver) +
+  `drizzle-orm ^0.36.4` + `drizzle-kit ^0.28.1` (dev). Live: provisioned via Vercel's
+  Neon integration, schema pushed (per the `1d1eef9` commit message).
+- **AI:** `@anthropic-ai/sdk ^0.112.5`, `openai ^6.48.0` — dual-provider, optional,
+  template-fallback if neither key is set. No key configured in this local
+  environment.
+- **Email:** `resend ^6.18.0` is a dependency but is still **not integrated** — zero
+  send call sites in `src/`. `NotificationsForm.tsx` says so explicitly in its own UI
+  copy ("up yet (`resend` is installed but not integrated)"). The Daily Brief's
+  "Email" share action uses a client-side `mailto:` link instead.
 - **News ingestion:** `rss-parser ^3.13.0` (Google News RSS, no key).
 - **Dates:** `date-fns ^4.4.0`, `date-fns-tz ^3.2.0`.
 - **Icons:** `lucide-react ^1.25.0`.
-- **Validation:** `zod ^4.4.3` is a dependency but has **zero usages**
-  anywhere in `src/` — server actions currently take raw typed objects
-  with no runtime validation (see `SECURITY.md`).
+- **Validation:** `zod ^4.4.3` is a dependency but **still has zero usages** anywhere
+  in `src/` (re-verified this pass: `grep -r 'from "zod"' src/` → no matches) — server
+  actions and `/api/search` still trust their TypeScript input types with no runtime
+  validation. See `SECURITY.md`.
 - **Utility:** `clsx ^2.1.1` + `tailwind-merge ^3.6.0` (via `cn()`),
   `server-only ^0.0.1` (marks server-only modules).
-- **Lint:** ESLint `^9`, flat config, `eslint-config-next 16.2.11`.
+- **Lint:** ESLint `^9`, flat config, `eslint-config-next 16.2.11`. Clean (0/0).
+- **Skills:** `.claude/skills/{neon,neon-postgres}` and `.agents/skills/{neon,neon-postgres}`
+  were added in the `1d1eef9` commit (Claude Code / Agents skill packages used while
+  provisioning Neon), tracked via `skills-lock.json`.
 
 ## Essential commands
 
 Run all commands from `/Users/gariyuu/Projects/anibrief`.
 
 ```bash
-npm run dev         # next dev (Turbopack) — NOT verified this session
-npm run build        # next build — verified once; see caution below
-npm run start         # next start — not verified this session
-npm run lint          # eslint — verified: 5 errors, 3 warnings (final snapshot)
-npm run typecheck     # tsc --noEmit — verified: passes clean
-npm run test           # node --experimental-strip-types --test src/**/__tests__/**/*.test.ts
-                        #   verified: 0 tests found (no __tests__ dirs exist)
-npm run db:generate     # drizzle-kit generate — added by the concurrent build; not exercised this session
-npm run db:push         # drizzle-kit push — NOT run this session (would need a real DATABASE_URL; do not run against a real DB without permission)
-npm run db:studio        # drizzle-kit studio — not run this session
+npm run dev            # next dev (Turbopack)
+npm run build           # next build — verified this re-sync: succeeds, 44 routes
+npm run start            # next start — not exercised this re-sync
+npm run lint              # eslint — verified this re-sync: 0 errors, 0 warnings
+npm run typecheck          # tsc --noEmit — verified this re-sync: passes clean
+npm run test                 # node --experimental-strip-types --test src/**/__tests__/**/*.test.ts
+                              #   verified this re-sync: 24/24 pass, 0 fail
+npm run db:generate            # drizzle-kit generate — not re-run this pass (no schema changes made)
+npm run db:push                 # drizzle-kit push — already run in production per the 1d1eef9 commit
+                                 #   message ("Provisioned Neon Postgres... pushed schema"); NOT
+                                 #   re-run by this documentation pass. Never run against a real DB
+                                 #   without explicit permission.
+npm run db:studio                # drizzle-kit studio — not run this pass
 ```
-
-**Caution on `npm run build`:** during this audit, running `build` was
-immediately followed by a large amount of new application code
-appearing in the working tree (Clerk auth wiring, `.env.local`, the
-Neon/Drizzle layer, `package.json` dependency changes). The audit's
-working theory, after observation, is that this was a **separate
-concurrent process/agent actively building the app in parallel**, not a
-side effect of `build` itself — but this was never conclusively proven
-(no way to attribute file-write ownership on this machine from inside
-the session). Because of that ambiguity: **do not assume `build` is a
-side-effect-free command in this repo.** If you run it, check
-`git status`-equivalent (a file-timestamp diff, since there's no git
-history to compare against) immediately before and after.
 
 ## Repository structure
 
 ```
 anibrief/
-├── AGENTS.md                # Breaking-changes warning for this Next.js version; @-included by CLAUDE.md
+├── AGENTS.md                # Breaking-changes warning for this Next.js version
 ├── CLAUDE.md                 # This file
 ├── PROJECT_STATE.md, TASKS.md, ARCHITECTURE.md, FILE_MAP.md, FEATURES.md,
 │   ROADMAP.md, DECISIONS.md, DATABASE.md, API_REFERENCE.md, UI_SYSTEM.md,
 │   SECURITY.md, TESTING.md, DEPLOYMENT.md, CHANGELOG.md, SESSION_LOG.md,
-│   HANDOFF.md                # This audit's memory files (all in repo root)
+│   HANDOFF.md                # This 17-file memory system (all in repo root)
+├── README.md, CONTRIBUTING.md, DATA_SOURCES.md, ENVIRONMENT_VARIABLES.md
+│                             # Product-facing docs added during the build (not part
+│                             # of the original 17-file memory-system spec, but real
+│                             # and current — see each for its own scope)
 ├── package.json / package-lock.json
 ├── tsconfig.json, eslint.config.mjs, postcss.config.mjs, next.config.ts
-├── vercel.json                # 7 cron job declarations (see DEPLOYMENT.md — targets don't exist yet)
+├── vercel.json                # 7 cron declarations, once-daily/staggered (Hobby-plan
+│                               # compatible) — see DEPLOYMENT.md
 ├── drizzle.config.ts           # drizzle-kit config
 ├── drizzle/                    # Generated migration (0000_silly_captain_stacy.sql) + meta
-├── .env.local                  # Clerk keys only (6 vars) — see "Environment setup"
-├── public/                     # Empty — zero static assets
-├── supabase/migrations/         # Empty directory — vestige of an earlier (abandoned) Supabase plan; package.json no longer depends on @supabase/*
+├── .env.example                 # Full, real, placeholder-only env var template
+├── .env.local                    # Clerk + Neon (Vercel-integration) vars, gitignored
+├── .claude/skills/, .agents/skills/  # neon / neon-postgres skill packages (skills-lock.json)
+├── public/                        # PWA service worker (sw.js) — otherwise empty; all
+│                                   # icons/OG images are generated via next/og, not static
+├── scripts/                        # register-loader.mjs, resolve-aliases.mjs (test runner support)
+├── supabase/migrations/             # Empty directory — vestige of an abandoned Supabase
+│                                     # plan; package.json no longer depends on @supabase/*
 └── src/
-    ├── app/
-    │   ├── layout.tsx           # Root layout: ClerkProvider, AppShell, theme-init script, fonts, metadata
-    │   ├── globals.css           # Theme tokens (accent system, light/dark)
-    │   ├── manifest.ts, icon.tsx, apple-icon.tsx, opengraph-image.tsx, pwa-icon/{192,512}/route.tsx
-    │   ├── api/search/route.ts    # The only real API route: GET, AniList search proxy
-    │   └── sign-in/[[...sign-in]]/page.tsx, sign-up/[[...sign-up]]/page.tsx  # Clerk defaults
-    │       # NOTE: no page.tsx for "/" or any of nav.ts's 15 routes
-    ├── proxy.ts                   # Next 16's middleware convention; wraps clerkMiddleware()
+    ├── proxy.ts                     # Clerk middleware; also enforces the /admin auth gate
+    │                                 # (see "Current status" — this is the auth-bypass fix)
+    └── app/
+        ├── layout.tsx                # Root layout: ClerkProvider, AppShell, theme-init script
+        ├── page.tsx                   # Home dashboard (hero brief + episode timeline + trending + birthdays)
+        ├── daily-brief/, daily-brief/archive/, daily-brief/archive/[date]/
+        ├── news/, airing/, seasonal/, discover/, calendar/
+        ├── anime/, anime/[id]/{characters,music,news,relations,staff,statistics}/
+        ├── manga/, manga/[id]/{characters,news,relations}/
+        ├── music/, people/, people/[id]/
+        ├── my-list/, profile/, settings/, settings/import/
+        ├── alerts/
+        ├── admin/                     # Clerk-gated (ADMIN_USER_IDS or profiles.isAdmin);
+        │                               # gated in both proxy.ts (middleware) and layout.tsx
+        ├── api/
+        │   ├── search/route.ts          # Command-palette search proxy
+        │   ├── calendar/ics/route.ts     # .ics calendar export
+        │   └── cron/{birthdays,daily-brief,notifications,refresh-airing,
+        │             refresh-news,refresh-seasonal,trend-snapshot}/route.ts
+        │                                 # All 7 real, all wrapped in runCronJob()'s
+        │                                 # sync_jobs idempotency lock
+        ├── sign-in/[[...sign-in]]/, sign-up/[[...sign-up]]/   # Clerk hosted pages
+        └── whats-new/                    # Renders CHANGELOG.md content
     ├── components/
     │   ├── ui/                    # Button, Card, Badge, Avatar, Skeleton, EmptyState, ErrorState, Tabs
-    │   ├── layout/                # AppShell, NavLinks, MobileNav, CommandPalette, ThemeToggle, AccentPicker
-    │   ├── brand/                  # Logo, Mark (SVG)
-    │   ├── home/                    # HeroBrief, StatTile, EpisodeTimeline, TrendingList, BirthdayStrip
-    │   ├── anime/                   # AnimeCard, AnimeGrid
-    │   ├── news/                     # NewsCard, NewsList
-    │   └── actions/                  # AddToListButton, RemindMeButton (client components wrapping server actions)
+    │   ├── layout/                 # AppShell, NavLinks, MobileNav, CommandPalette, ThemeToggle,
+    │   │                            # AccentPicker, AnnouncementBanner
+    │   ├── brand/                   # Logo, Mark (SVG)
+    │   ├── home/                     # HeroBrief, StatTile, EpisodeTimeline, TrendingList, BirthdayStrip
+    │   ├── briefing/                  # DailyBriefView, BriefModeToggle, BriefActions
+    │   ├── anime/, news/, people/, airing/, calendar/
+    │   ├── actions/                    # AddToListButton, RemindMeButton, RemoveFromListButton,
+    │   │                                # FollowButton, UnfollowChip, ListStatusSelect,
+    │   │                                # FavoriteToggleButton
+    │   ├── admin/                       # AnnouncementBannerForm, DataSourceToggle,
+    │   │                                 # FeatureFlagToggle, TestNotificationButton
+    │   ├── settings/                     # 8 preference forms (Appearance, BriefPrefs, ContentPrefs,
+    │   │                                  # Notifications, Privacy, Region, Spoiler, Streaming)
+    │   ├── import/                        # ImportWizard
+    │   └── pwa/                            # OfflineBanner, ServiceWorkerRegister
     └── lib/
-        ├── ai/                        # AIProvider interface, Anthropic + OpenAI implementations, provider selection
-        ├── actions/                    # "use server" Clerk-gated CRUD: animeList, mangaList, alerts, follows, profile
-        ├── briefing/                    # buildBriefing, getTodaysBriefing, store (Neon or in-memory)
-        ├── db/                           # client.ts (lazy Drizzle/Neon client) + schema/ (18 tables across 5 files)
-        ├── dedup/                        # clusterNews, textSimilarity (Jaccard) — news deduplication
-        ├── providers/                     # anilist/, jikan/, mal/, music/, news/, streaming/, youtube/, types.ts
-        ├── types/                          # Shared TS contracts: media, person, news, music, briefing, calendarEvent, userList
-        ├── utils/                          # cn, dates, logger, retry
-        ├── nav.ts                          # Nav item declarations (15 routes) — the source of truth for intended IA
-        └── theme.ts                        # 7 accent theme definitions + localStorage keys
+        ├── ai/                        # AIProvider interface, Anthropic + OpenAI implementations
+        ├── actions/                    # "use server" Clerk-gated CRUD: animeList, mangaList,
+        │                                # alerts, follows, profile, calendarReminders, listImport, admin
+        ├── admin/                       # providerHealth.ts (live admin health-check aggregator)
+        ├── briefing/                     # buildBriefing, getTodaysBriefing, store (Neon or in-memory)
+        ├── cron/                          # runCronJob.ts (shared idempotency-lock wrapper)
+        ├── db/                             # client.ts (lazy Drizzle/Neon client) + schema/ (18 tables)
+        ├── dedup/                          # clusterNews, textSimilarity — now called from src/app/news/page.tsx
+        ├── providers/                       # anilist/, jikan/, mal/, music/, news/, streaming/, youtube/, types.ts
+        ├── types/                            # Shared TS contracts
+        ├── utils/                            # cn, dates, logger, retry, season, mediaId, birthdays,
+        │                                      # alertLabels, adminAccess, calendarEvents
+        ├── nav.ts                             # 15-route nav source of truth — every route now has a page.tsx
+        └── theme.ts                           # 7 accent theme definitions + localStorage keys
 ```
 
 ## Architecture summary
 
-Server-first Next.js App Router app. Data providers under
-`src/lib/providers/*` are all `import "server-only"` and call external
-APIs directly (AniList GraphQL, Jikan REST, Google News RSS, YouTube
-Data API) with retry/backoff (`src/lib/utils/retry.ts`) and Next's
-`fetch` cache (`next: { revalidate }`) rather than a database cache.
-User-generated data (lists, alerts, follows, profile, saved news,
-calendar reminders) is meant to live in Neon Postgres via Drizzle, keyed
-by Clerk's `userId` — but every write path first checks
-`isDatabaseConfigured()` and degrades to either an in-memory `Map`
-(briefing store only) or a thrown user-facing error (list/alert/follow/
-profile actions) when `DATABASE_URL` is unset, which it currently is.
-Auth is Clerk end-to-end: `proxy.ts` (middleware) + `ClerkProvider` in
-the root layout + `SignedIn`/`SignedOut`/`useUser()` in client
-components + `auth()` in server actions. See `ARCHITECTURE.md` for the
-full diagram and request lifecycle.
+Server-first Next.js App Router app. Data providers under `src/lib/providers/*` are
+all `import "server-only"` and call external APIs directly (AniList GraphQL, Jikan
+REST, Google News RSS, YouTube Data API) with retry/backoff and Next's `fetch` cache
+rather than a database cache. User-generated data (lists, alerts, follows, profile,
+saved news, calendar reminders) lives in Neon Postgres via Drizzle, keyed by Clerk's
+`userId` — every write path checks `isDatabaseConfigured()` first and degrades to a
+clear "sign in" / "not configured" error or an in-memory fallback (briefing store
+only) rather than crashing. Auth is Clerk end-to-end: `proxy.ts` (middleware, now also
+enforcing the `/admin` gate) + `ClerkProvider` in the root layout +
+`SignedIn`/`SignedOut`/`useUser()` in client components + `auth()` in server actions
+and route handlers. See `ARCHITECTURE.md` for the full diagram and request lifecycle.
 
 ## Coding conventions
 
-**Verified (observed consistently across the existing code):**
-- Every provider module starts with `import "server-only";` and never
-  throws to its caller — failures are caught, logged via
-  `src/lib/utils/logger.ts` (structured JSON to console), and a safe
+**Verified (observed consistently across the codebase, re-checked this pass):**
+- Every provider module starts with `import "server-only";` and never throws to its
+  caller — failures are caught, logged via `src/lib/utils/logger.ts`, and a safe
   empty/`null` fallback is returned instead.
-- Providers expose a `configured` boolean/getter so callers can render a
-  clear "not configured" state instead of a runtime crash
-  (`src/lib/providers/types.ts`'s `ProviderResult`, `ok()`/`fail()`
-  helpers — though not every provider actually returns this shape; check
-  each one).
-- Server actions (`src/lib/actions/*.ts`, `"use server"`) each start with
-  a local `requireUser()` that throws a **user-readable** error message
-  (not a generic 500) when unauthenticated or when the DB isn't
-  configured, then call `revalidatePath()` on success.
-- Components use `cn()` (`clsx` + `tailwind-merge`) for conditional
-  classes, never raw template-string class concatenation.
-- Money-shot UI primitives live in `src/components/ui/` and are the only
-  place Tailwind variant maps are defined — feature components compose
-  them rather than redefining button/card styling.
-- No CSS-in-JS; all styling is Tailwind utility classes + the CSS custom
-  properties in `globals.css`.
+- Server actions (`src/lib/actions/*.ts`, `"use server"`) each start with a local
+  `requireUser()`/`requireAdmin()` that throws a **user-readable** error message when
+  unauthenticated, unauthorized, or when the DB isn't configured, then call
+  `revalidatePath()` on success.
+- Several read-only functions across `animeList.ts`, `mangaList.ts`, `follows.ts`,
+  `alerts.ts`, `calendarReminders.ts`, and `profile.ts` (`getUserAnimeList(userId)`,
+  `getUserFollows(userId)`, `getOrCreateProfile(userId)`, etc.) still take a
+  **caller-supplied `userId`** rather than deriving it from `auth()` internally. Every
+  current caller (`src/app/my-list/page.tsx`, `profile/page.tsx`, `alerts/page.tsx`,
+  `settings/page.tsx`) correctly passes the signed-in session's own id — **not an
+  active vulnerability today** — but the functions themselves still have no internal
+  check that the caller is asking about their own data. See `SECURITY.md`.
+- Components use `cn()` (`clsx` + `tailwind-merge`) for conditional classes.
+- UI primitives live in `src/components/ui/` and are the only place Tailwind variant
+  maps are defined.
+- No CSS-in-JS; all styling is Tailwind utility classes + CSS custom properties.
+- Cron routes (`src/app/api/cron/*/route.ts`) are all thin wrappers around
+  `src/lib/cron/runCronJob.ts`, which takes an idempotency lock in the `sync_jobs`
+  table before running the job body — copy this pattern for any new scheduled route.
 
-**Recommended (not yet consistently enforced — flag if you see a
-deviation, don't assume it's a rule):**
-- Given `zod` is a dependency but unused, and server actions currently
-  trust their TypeScript input types at the boundary (no runtime
-  validation), adding `zod` parsing to each server action's input before
-  it reaches the DB would match the apparent intent of having it
-  installed. This is not yet a repo convention, just a gap.
+**Recommended (not yet enforced — flag if you see a deviation, don't assume it's a
+rule):**
+- `zod` is installed and unused; adding runtime validation to server actions and
+  `/api/search`'s query param would match the apparent intent of having it installed.
+  This is still just a gap, not yet a repo convention.
 
 ## UI and design system
 
 See `UI_SYSTEM.md` for full detail. Key files:
-- `src/app/globals.css` — CSS custom property tokens (`--background`,
-  `--surface`, `--accent`, etc.), 7 accent-theme variants keyed by
-  `[data-accent="..."]`, dark mode via `.dark` class + Tailwind's
-  `@custom-variant dark`.
-- `src/lib/theme.ts` — the 7 accent options (`sakura` default,
-  `midnight`, `ocean`, `ember`, `matcha`, `violet`, `monochrome`),
-  `localStorage` keys (`anibrief-accent`, `anibrief-theme`).
-- `src/components/ui/*` — Button (supports `href` → renders `Link`),
-  Card, Badge (4 tones), Avatar (image or initial fallback), Skeleton,
-  EmptyState, ErrorState (distinguishes "not configured" vs. "fetch
-  failed"), Tabs.
-- `src/components/brand/Mark.tsx` — original SVG logomark (folded page +
-  play-triangle/eye), documented in-code as "not derived from any
-  existing anime-site logo."
+- `src/app/globals.css` — CSS custom property tokens, 7 accent-theme variants,
+  dark mode via `.dark` class + Tailwind's `@custom-variant dark`.
+- `src/lib/theme.ts` — 7 accent options, `localStorage` keys.
+- `src/components/ui/*` — Button, Card, Badge, Avatar, Skeleton, EmptyState,
+  ErrorState, Tabs.
+- `src/components/brand/Mark.tsx` — original SVG logomark.
 
 ## Environment setup
 
-**No `.env.example` exists in the repo.** The list below was
-reconstructed from `process.env.*` references in the code and from
-`.env.local`'s key names (values were never read/printed during this
-audit — only key names, via a redacting `sed` command).
+**A real `.env.example` exists** (`/.env.example`) — copy it to `.env.local` and fill
+in what you need; the app runs with zero variables set (AniList needs no key).
 
-| Variable | Required? | Client/Server | Purpose | Placeholder |
-|---|---|---|---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Required (Clerk won't init without it) | Client | Clerk publishable key | `pk_test_xxxxxxxx` |
-| `CLERK_SECRET_KEY` | Required | Server | Clerk backend secret | `sk_test_xxxxxxxx` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Optional (Clerk default used otherwise) | Client | Sign-in route override | `/sign-in` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Optional | Client | Sign-up route override | `/sign-up` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Optional | Client | Post-sign-in redirect | `/` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Optional | Client | Post-sign-up redirect | `/` |
-| `DATABASE_URL` | Optional — but every DB feature is inert without it | Server | Neon Postgres connection string | `postgres://user:pass@host/db` |
-| `ANTHROPIC_API_KEY` | Optional | Server | Enables Anthropic AI briefing summaries | `sk-ant-xxxxxxxx` |
-| `ANTHROPIC_MODEL` | Optional (default `claude-sonnet-5`) | Server | Override Anthropic model id | `claude-sonnet-5` |
-| `OPENAI_API_KEY` | Optional | Server | Enables OpenAI AI briefing summaries (`AI_PROVIDER=openai`) | `sk-xxxxxxxx` |
-| `OPENAI_MODEL` | Optional (default `gpt-4o-mini`) | Server | Override OpenAI model id | `gpt-4o-mini` |
-| `AI_PROVIDER` | Optional (default `anthropic`) | Server | `"anthropic"` \| `"openai"` | `anthropic` |
-| `YOUTUBE_API_KEY` | Optional | Server | Enables trailer/PV search; returns `[]` without it | `AIzaSy...` |
-| `MAL_CLIENT_ID` | Optional, currently no-op | Server | Gates `MyAnimeListProvider`, whose methods are stubs regardless | `mal_client_xxxxxxxx` |
-| `NEXT_PUBLIC_APP_URL` | Optional (defaults to `http://localhost:3000`) | Client | `metadataBase` for OG images | `https://anibrief.example.com` |
+| Variable | Required? | Client/Server | Purpose |
+|---|---|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Required for sign-in | Client | Clerk publishable key |
+| `CLERK_SECRET_KEY` | Required for sign-in | Server | Clerk backend secret |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `..._SIGN_UP_URL` / `..._SIGN_IN_FALLBACK_REDIRECT_URL` / `..._SIGN_UP_FALLBACK_REDIRECT_URL` | Optional | Client | Clerk routing overrides |
+| `DATABASE_URL` | Optional — every personalization feature is inert without it | Server | Neon Postgres connection string |
+| `ADMIN_USER_IDS` | Optional | Server | Comma-separated Clerk user ids allowed into `/admin`, in addition to `profiles.isAdmin` |
+| `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET` | Optional, currently no-op | Server | Gates `MyAnimeListProvider`, whose methods are still unconditional stubs |
+| `YOUTUBE_API_KEY` | Optional | Server | Enables real trailer/PV search; empty results without it |
+| `AI_PROVIDER` (+ `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`) | Optional | Server | AI-written Daily Brief summary; template fallback otherwise |
+| `ANTHROPIC_MODEL`, `OPENAI_MODEL` | Optional | Server | Model overrides (defaults `claude-sonnet-5` / `gpt-4o-mini`) |
+| `CRON_SECRET` | Optional but recommended before a public deploy | Server | Bearer-token guard on `/api/cron/*`; Vercel Cron sends it automatically once set |
+| `NEXT_PUBLIC_APP_URL` | Optional (defaults to `http://localhost:3000`) | Client | Absolute link/share/OG base URL |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Not currently used | — | Reserved for a future email-digest feature; zero call sites in `src/` today |
 
-**Not present but implied by a dependency:** a Resend API key
-(`resend` is installed) — no such variable is actually read anywhere in
-`src/`, so there is nothing to configure for it yet.
-
-`.env.local` at the final snapshot contained exactly the 6 Clerk
-variables above (confirmed by key name only, values never inspected) —
-**no `DATABASE_URL`, no AI keys, no `YOUTUBE_API_KEY`** are configured
-in this environment, meaning the DB and AI layers are wired in code but
-functionally inert right now.
+**This local environment** (`.env.local`, confirmed by variable *names* only, values
+never read/printed) has: Clerk keys, `DATABASE_URL` + the full set of Neon/Postgres
+variables Vercel's integration writes (`PGHOST`, `POSTGRES_URL`, etc.). **Not set
+locally:** `ADMIN_USER_IDS`, `AI_PROVIDER`/`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`,
+`YOUTUBE_API_KEY`, `MAL_CLIENT_ID`, `CRON_SECRET`, `RESEND_API_KEY`. This means, in
+this environment specifically: sign-in and DB-backed personalization work; `/admin`
+is inaccessible (no allowlist) unless a `profiles.isAdmin` row is set by hand; the
+Daily Brief uses the template summary, not an AI one; trailer search returns empty;
+cron routes run unauthenticated with a logged warning. See `ENVIRONMENT_VARIABLES.md`
+for the full unlock/degrade table.
 
 ## Database summary
 
-Neon Postgres (serverless HTTP driver) via Drizzle ORM. 18 tables across
-5 schema files under `src/lib/db/schema/`. Zero rows/deployment exist —
-`DATABASE_URL` is unset, and `npm run db:push` was never run this
-session. A migration (`drizzle/0000_silly_captain_stacy.sql`) has been
-*generated* but not *applied* anywhere. Full detail, including every
-table and its columns, is in `DATABASE.md`.
+Neon Postgres (serverless HTTP driver) via Drizzle ORM. 18 tables across 5 schema
+files under `src/lib/db/schema/`. Schema has been generated
+(`drizzle/0000_silly_captain_stacy.sql`) and, per the `1d1eef9` commit message,
+**pushed to a real, Vercel-provisioned Neon database** — this documentation pass did
+not independently re-verify live row data (out of scope; no destructive/exploratory
+DB queries were run). Full detail in `DATABASE.md`.
 
 ## Authentication and authorization
 
-Clerk (`@clerk/nextjs`). `src/proxy.ts` wraps `clerkMiddleware()`.
-`ClerkProvider` sits at the root of `layout.tsx`. There is **no custom
-role/permission system** beyond Clerk's own signed-in/signed-out state —
-a `profiles.isAdmin` boolean column exists in the DB schema but nothing
-in the code reads or enforces it anywhere (no admin route, no admin
-check). Treat any "admin" surface as schema-only/planned. See
-`SECURITY.md` for the full authz review.
+Clerk (`@clerk/nextjs`) end-to-end. `src/proxy.ts` wraps `clerkMiddleware()` and now
+also blocks `/admin` for non-admins **before any rendering starts** (the fix for the
+auth-bypass bug in commit `1d1eef9` — see "Current status"). `profiles.isAdmin` and
+the `ADMIN_USER_IDS` env allowlist (`src/lib/utils/adminAccess.ts`'s `isAdminUser()`)
+are both real, wired, and used by both the middleware gate and `src/app/admin/layout.tsx`.
+See `SECURITY.md` for the full authz review.
 
 ## API and integrations
 
-One real API route: `GET /api/search` (AniList search proxy for the
-command palette). Everything else is either a Next.js file-convention
-route (icons, manifest, OG image — not really "APIs") or a server
-action. External integrations: AniList GraphQL (no key), Jikan REST (no
-key, self-throttled), Google News RSS (no key), YouTube Data API v3
-(key-gated), Anthropic/OpenAI (key-gated, template fallback). Full
-detail in `API_REFERENCE.md` and `FEATURES.md`.
+Real HTTP routes: `GET /api/search` (command-palette proxy), `GET /api/calendar/ics`
+(auth-gated `.ics` export), and all 7 `/api/cron/*` routes. External integrations:
+AniList GraphQL (no key), Jikan REST (no key, self-throttled, currently only called
+from the admin health check), Google News RSS (no key), YouTube Data API v3
+(key-gated, called from the Music pages), Anthropic/OpenAI (key-gated, template
+fallback). Full detail in `API_REFERENCE.md` and `FEATURES.md`.
 
 ## Testing and verification
 
-- `npm run typecheck` — **passes clean** (verified twice this session,
-  once against the original ~37-file scaffold and once against the
-  final ~90-file snapshot).
-- `npm run lint` — **passed clean against the original scaffold**, but
-  **fails with 5 errors + 3 warnings against the final snapshot** (all
-  in files added by the concurrent build during this session — see
-  `TESTING.md`).
-- `npm run test` — 0 tests found, 0 pass/fail (no `__tests__` files
-  exist anywhere).
-- `npm run build` — run once, succeeded, but see the caution above about
-  its observed side effects. Not re-run after the final snapshot to
-  avoid further disturbing an already-fast-moving working tree.
-- No E2E, no component tests, no CI workflow files found anywhere in the
-  repo (no `.github/workflows/`).
+- `npm run typecheck` — **passes clean** (re-verified this pass).
+- `npm run lint` — **passes clean, 0 errors, 0 warnings** (re-verified this pass; the
+  earlier snapshot's 8 problems are fixed).
+- `npm run test` — **24/24 pass** (re-verified this pass): `src/lib/dedup/__tests__/
+  {clusterNews,textSimilarity}.test.ts`, `src/lib/providers/anilist/__tests__/
+  mappers.test.ts`, `src/lib/providers/news/__tests__/reliability.test.ts`,
+  `src/lib/utils/__tests__/{dates,season}.test.ts`.
+- `npm run build` — **succeeds** (re-verified this pass; 44 routes).
+- No E2E, no component tests, no CI workflow files found anywhere in the repo (no
+  `.github/workflows/`) — see `TESTING.md`.
 
 ## Deployment
 
-`vercel.json` declares 7 cron jobs (`/api/cron/refresh-airing`,
-`/api/cron/refresh-news`, `/api/cron/refresh-seasonal`,
-`/api/cron/birthdays`, `/api/cron/trend-snapshot`,
-`/api/cron/daily-brief`, `/api/cron/notifications`) — **none of these
-routes exist in the codebase.** If deployed to Vercel as-is, every cron
-invocation would 404. No other Vercel config (no `vercel link`
-evidence, no project ID found). See `DEPLOYMENT.md`.
+Live at https://anibrief.vercel.app. `vercel.json` declares all 7 cron jobs, now
+**once-daily and staggered** (Hobby-plan compatible — see `DEPLOYMENT.md`), matching
+7 real routes under `src/app/api/cron/*`. Neon Postgres provisioned via Vercel's
+integration; Clerk configured for production. See `DEPLOYMENT.md` for the full
+checklist and the two production fixes shipped in `1d1eef9`.
 
 ## DO NOT CHANGE WITHOUT REVIEW
 
-1. **`src/proxy.ts` and Clerk configuration** — this is the entire
-   auth boundary for the app. Changing the matcher or removing
-   `clerkMiddleware()` would either lock everyone out or leave every
-   route unauthenticated.
-2. **`src/lib/db/schema/*`** — 18 tables already have a generated
-   migration (`drizzle/0000_silly_captain_stacy.sql`). Changing column
-   types/names now, before that migration has ever been applied to a
-   real database, is low-risk *today*, but do not assume that stays
-   true — check whether `DATABASE_URL` has been pointed at a real,
-   possibly-seeded Neon instance before altering schema.
-3. **`vercel.json`'s cron schedules** — even though the target routes
-   don't exist yet, changing the schedule strings without also creating
-   the routes (or vice versa) will silently break whichever side is
-   assumed to match.
-4. **`.env.local`** — contains real-looking Clerk secret values. Never
-   print, log, or copy its contents into any documentation, commit, or
-   chat output. This audit only ever read redacted key *names*.
-5. **The `isDatabaseConfigured()` / `getAIProvider()` graceful-degradation
-   pattern** in `src/lib/db/client.ts` and `src/lib/ai/index.ts` — every
-   caller depends on these never throwing when unconfigured (except
-   `db()` itself, which throws intentionally and is expected to be
-   guarded by `isDatabaseConfigured()` first). Don't "simplify" this to
-   assume a key/URL is always present.
-6. **`package.json` dependency set** — it changed substantially during
-   this session (see `CHANGELOG.md` / `SESSION_LOG.md`). Don't remove
-   `@clerk/nextjs`, `@neondatabase/serverless`, `drizzle-orm`, or
-   `drizzle-kit` assuming they're unused — they're the entire auth/DB
-   layer as of the final snapshot.
+1. **`src/proxy.ts`** — the entire auth boundary, and (as of `1d1eef9`) the
+   authoritative `/admin` gate. Removing or narrowing its admin-route check
+   re-introduces the fixed auth-bypass bug.
+2. **`src/lib/db/schema/*`** — the schema has a generated migration that has been
+   pushed to a real, live Neon database (per the `1d1eef9` commit message). Treat
+   schema changes as needing a real migration path from here on, not a "green field"
+   `db:push`.
+3. **`vercel.json`'s cron schedules** — kept intentionally once-daily/staggered for
+   Vercel Hobby-plan compatibility; see `DEPLOYMENT.md` before changing.
+4. **`.env.local`** — contains real Clerk and Neon connection values for this
+   environment. Never print, log, or copy its contents into any documentation,
+   commit, or chat output. This pass only ever read redacted key *names*.
+5. **The `isDatabaseConfigured()` / `getAIProvider()` graceful-degradation pattern**
+   in `src/lib/db/client.ts` and `src/lib/ai/index.ts`.
+6. **`src/components/briefing/DailyBriefView.tsx`/`BriefModeToggle.tsx`'s
+   server/client prop boundary** — this is the exact shape that crashed production
+   once (function props aren't serializable across the RSC boundary); don't
+   reintroduce a function prop here without checking `1d1eef9`'s diff first.
+7. **`package.json` dependency set** — don't remove `@clerk/nextjs`,
+   `@neondatabase/serverless`, `drizzle-orm`, or `drizzle-kit` assuming they're
+   unused — they're the entire live auth/DB layer.
 
 ## Known issues
 
-- **Lint fails** on the final snapshot: 5 `react-hooks/set-state-in-effect`
-  errors (`EpisodeTimeline.tsx`, `AccentPicker.tsx`, `CommandPalette.tsx`
-  ×2, `ThemeToggle.tsx`) + 3 unused-import warnings
-  (`CommandPalette.tsx`'s `Image`, `lists.ts`'s `primaryKey`,
-  `profiles.ts`'s `integer`). See `TESTING.md` and `TASKS.md`.
-- **No page renders anything.** `HeroBrief`, `EpisodeTimeline`,
-  `TrendingList`, `BirthdayStrip`, `AnimeGrid`, `NewsList` etc. all exist
-  and look complete, but nothing in `src/app/` imports or renders them —
-  there is no home page. The command palette and nav links point at
-  routes with no `page.tsx`.
-- **`vercel.json` cron targets don't exist** (see above).
-- **`supabase/migrations/` is an empty leftover directory** from an
-  apparently-abandoned Supabase plan — `package.json` no longer has
-  `@supabase/ssr`/`@supabase/supabase-js` as of the final snapshot (they
-  were present at the very start of this session and were replaced by
-  the Neon/Drizzle stack partway through). The empty `supabase/` folder
-  itself was never cleaned up.
-- **`resend` and `zod` are installed but 100% unused** in `src/`.
-- **`MyAnimeListProvider`'s methods are unconditionally-`null` stubs**
-  regardless of `MAL_CLIENT_ID` — "intentionally unimplemented" per its
-  own code comment.
-- **`MusicProvider` is hand-curated mock data** (4 real songs, honestly
-  labeled `source: "mock"` in the type) — no live Spotify/MusicBrainz
-  integration.
-- **No `.env.example`** — the env var table in this file is the only
-  in-repo documentation of what to configure.
-- **This repo has no git history of its own** — see "Current status."
-- **The DB schema (Drizzle) and the app's shared TS types
-  (`src/lib/types/*`) are two separate, hand-kept-in-sync shapes** (e.g.
-  enums are plain `text()` columns in Drizzle, not derived from the TS
-  union types) — a future schema change could silently drift from the
-  type layer with no compiler error. See `DECISIONS.md`.
+- **`zod` and `resend` are installed but 100% unused** in `src/` (re-verified this
+  pass).
+- **`MyAnimeListProvider`'s methods are unconditionally-`null` stubs** regardless of
+  `MAL_CLIENT_ID` — "intentionally unimplemented" per its own code comment.
+- **`MusicProvider` is hand-curated mock data** (4 real songs, honestly labeled
+  `source: "mock"`) — no live Spotify/MusicBrainz integration, though it **is now
+  reachable** via `/music` and `anime/[id]/music`.
+- **`JikanProvider` has exactly one caller** (`src/lib/admin/providerHealth.ts`'s
+  health check) — its actual ranking data (`getRankingByMalId`) still has zero
+  consumers outside that configured-check.
+- **The 6 caller-supplied-`userId` read functions** (see "Coding conventions" above)
+  are a latent IDOR-shaped design gap — not an active bug given today's callers, but
+  flag it before adding a new caller.
+- **No rate limiting anywhere** — `/api/search`, `/api/calendar/ics`, and every server
+  action have no request-rate protection.
+- **`package.json`'s version field (`0.1.0`) doesn't match the changelog/commit
+  messages (`0.1.1`).**
+- **`supabase/migrations/` is an empty leftover directory** from an abandoned earlier
+  plan — harmless, never cleaned up.
+- **No CI workflow** (no `.github/workflows/`).
+- **The DB schema (Drizzle) and the app's shared TS types (`src/lib/types/*`) are two
+  separate, hand-kept-in-sync shapes** — see `DECISIONS.md`.
 
 ## AI working instructions
 
@@ -423,80 +415,53 @@ Future Claude Code sessions (or any AI agent) working in this repo must:
 1. Read `CLAUDE.md` (this file) in full.
 2. Read `PROJECT_STATE.md`.
 3. Read `TASKS.md`.
-4. Read whichever of `ARCHITECTURE.md` / `FEATURES.md` /
-   `API_REFERENCE.md` / `DATABASE.md` / `UI_SYSTEM.md` / `SECURITY.md` /
-   `DEPLOYMENT.md` is relevant to the task at hand.
-5. Re-run `npm run typecheck` and `npm run lint` yourself before trusting
-   this file's "Testing and verification" section — the repo may have
-   changed again since this audit (see the concurrent-modification note
-   at the top of this file).
-6. Inspect the affected code directly before changing it — do not trust
-   a memory file's description of a function's exact behavior over
-   reading the function itself.
-7. Check for uncommitted/untracked state before modifying files — recall
-   there is no git repo local to `anibrief/` itself, so "uncommitted"
-   effectively means "everything," and there is no diff/undo safety net.
-8. Avoid overwriting unrelated work — especially plausible here, given
-   evidence of concurrent development during this very audit.
-9. Make small, reviewable changes.
-10. Run `npm run typecheck && npm run lint && npm run build` after
-    changes touching `src/` — but read the build caution above first.
-11. Update documentation after meaningful changes (see the permanent
-    rules below).
-12. Never claim something works without verification — "it typechecks"
-    is not the same claim as "it renders in a browser," which is not the
-    same claim as "a real user flow works end-to-end." Say which one you
-    mean.
-13. Never expose secrets (`.env.local` values, Clerk secret key, any
-    future `DATABASE_URL`) in output, commits, or documentation.
-14. Never modify production data — there is no evidence of a production
-    database yet, but if one is ever configured, treat it as real.
-15. Never perform destructive database operations (`db:push` against a
-    populated database, `DROP TABLE`, etc.) without explicit permission.
-16. Never silently replace an existing architectural pattern (e.g. the
-    Clerk+Neon+Drizzle stack, the provider graceful-degradation pattern)
-    with a new one without it being the explicit point of the task —
-    note that this exact kind of silent replacement (Supabase → Clerk/
-    Neon/Drizzle) appears to have already happened once during this very
-    session; see `DECISIONS.md`.
-17. Never remove a dependency without a fresh repo-wide search for its
-    usages first (`resend` and `zod` are flagged as apparently unused
-    above — verify freshly, don't just trust this file).
-18. Record unresolved uncertainty in the relevant memory file rather than
-    guessing and presenting a guess as fact.
+4. Read whichever of `ARCHITECTURE.md` / `FEATURES.md` / `API_REFERENCE.md` /
+   `DATABASE.md` / `UI_SYSTEM.md` / `SECURITY.md` / `DEPLOYMENT.md` is relevant to the
+   task at hand.
+5. Re-run `npm run typecheck && npm run lint && npm run test` yourself before trusting
+   this file's "Testing and verification" section — re-verify, don't just cite it.
+6. Check `git log`/`git status` first — this repo now has real git history; use it
+   (`git diff`, `git log -p`) instead of guessing what changed.
+7. Inspect the affected code directly before changing it.
+8. Make small, reviewable changes; commit only when explicitly asked to.
+9. Run `npm run typecheck && npm run lint && npm run test && npm run build` after
+   changes touching `src/`.
+10. Update documentation after meaningful changes (see the permanent rules below).
+11. Never claim something works without verification.
+12. Never expose secrets (`.env.local` values, Clerk secret key, `DATABASE_URL`) in
+    output, commits, or documentation.
+13. Never perform destructive database operations (`db:push` against a populated
+    database, `DROP TABLE`, etc.) without explicit permission — remember `DATABASE_URL`
+    now points at a real, live, schema-pushed database.
+14. Never silently replace an existing architectural pattern without it being the
+    explicit point of the task.
+15. Record unresolved uncertainty in the relevant memory file rather than guessing.
 
 ## Permanent rules for future development
 
 **After every meaningful coding task:**
 1. Update `PROJECT_STATE.md` with the new exact stopping point.
 2. Update `TASKS.md` (move/close tasks, add new ones discovered).
-3. Append an entry to `SESSION_LOG.md` (append — never overwrite prior
-   entries).
-4. Update whichever of `FEATURES.md` / `ARCHITECTURE.md` /
-   `API_REFERENCE.md` / `DATABASE.md` / `TESTING.md` / `DEPLOYMENT.md` /
-   `SECURITY.md` is affected by the change.
-5. Remove or correct stale information you notice, even if unrelated to
-   your task — but note what you changed and why in `SESSION_LOG.md`.
+3. Append an entry to `SESSION_LOG.md` (append — never overwrite prior entries).
+4. Update whichever of `FEATURES.md` / `ARCHITECTURE.md` / `API_REFERENCE.md` /
+   `DATABASE.md` / `TESTING.md` / `DEPLOYMENT.md` / `SECURITY.md` is affected.
+5. Remove or correct stale information you notice, even if unrelated to your task —
+   note what you changed and why in `SESSION_LOG.md`.
 6. Record meaningful architectural decisions in `DECISIONS.md`.
 7. Run the verification commands listed above.
-8. Clearly record anything not verified rather than implying full
-   verification.
-9. Treat this repository's memory files as the permanent source of
-   project memory — chat history will not survive to the next session.
+8. Clearly record anything not verified rather than implying full verification.
+9. Treat this repository's memory files as the permanent source of project memory.
 
 **Before every meaningful coding task:**
 1. Read `CLAUDE.md`.
 2. Read `PROJECT_STATE.md`.
 3. Read `TASKS.md`.
 4. Read the relevant technical documentation file(s).
-5. Take a fresh file-timestamp inventory (there is no `git status` to
-   lean on) and compare it against what `PROJECT_STATE.md` describes.
+5. Run `git log --oneline` / `git status` and compare against what `PROJECT_STATE.md`
+   describes.
 6. Inspect the specific files you're about to change.
-7. Confirm the requested work isn't already done (check `TASKS.md`
-   "Recently completed" and the actual code — this repo has a track
-   record of gaining large amounts of code between sessions).
-8. Preserve unrelated work — never delete files you didn't create
-   without first confirming with the user, especially given this
-   session's evidence of concurrent development.
-9. Identify risks before modifying anything listed under "DO NOT CHANGE
-   WITHOUT REVIEW" above.
+7. Confirm the requested work isn't already done (check `TASKS.md` "Recently
+   completed" and the actual code).
+8. Preserve unrelated work.
+9. Identify risks before modifying anything listed under "DO NOT CHANGE WITHOUT
+   REVIEW" above.

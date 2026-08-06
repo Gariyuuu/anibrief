@@ -1,215 +1,182 @@
 # TASKS.md — Active Execution Queue
 
-> Snapshot: 2026-08-06 05:59:28 MST. **See `PROJECT_STATE.md`'s
-> "ADDENDUM" section: by ~06:15 MST the repo had grown from ~90 to
-> ~176 files, apparently gaining a home page, most nav routes, most
-> cron routes, and real tests. T-001, T-002, and T-003 below may
-> already be done — verify against the actual code before starting any
-> of them.**
+> Re-synced 2026-08-06 ~15:35 MST against the actual current git state (`main`,
+> commit `1d1eef9`, working tree clean). The previous version of this file was
+> written against a stale, mid-flight snapshot from earlier the same day — every
+> task below (T-001 through T-004 in the old version) has since been completed by
+> the work that landed in commits `0a1de43`/`1d1eef9`. See "Recently completed"
+> and `SESSION_LOG.md` for the full account.
 
 ## Current task
 
-**T-000 — Documentation audit (this session).**
-- **Description:** Bring `anibrief/` up to the same 17-file
-  documentation standard as `chamber-seven`/`buildstrike-arena`, built
-  purely from inspecting this repo, no product behavior changed.
-- **Status:** In progress → nearing completion (writing the final files
-  now).
+**T-005 — Documentation re-sync (this session).**
+- **Description:** Bring the 17-file documentation system back in sync with the
+  actual, now-committed code — the previous pass locked a snapshot before the
+  concurrent build it was watching had finished and been committed.
+- **Status:** Complete (this session).
 - **Priority:** High (explicit user request).
-- **Relevant files:** all 17 root `.md` files.
+- **Relevant files:** all 17 root `.md` files, `.env.example`.
 - **Dependencies:** none.
-- **Acceptance criteria:** all 17 files exist, are internally
-  consistent with each other and with the actual repo content, contain
-  no fabricated facts and no real secret values, and the report back to
-  the user covers every required item (file list, branch/tree state,
-  current task, feature statuses, unknowns, secret-leak confirmation,
-  readiness score, yes/no standard-match verdict).
-- **Validation steps:** re-read each file once written; grep all 17
-  files for anything that looks like a real secret value; confirm
-  `PROJECT_STATE.md`/`TASKS.md`/`HANDOFF.md` describe the current task
-  identically.
-- **Blockers:** none remaining — the earlier blocker (repository under
-  active concurrent modification, making "current state" a moving
-  target) was resolved by locking a snapshot timestamp
-  (05:59:28 MST) and documenting the volatility explicitly rather than
-  waiting indefinitely for it to stop.
-- **Notes for a cold resume:** if you're picking this up mid-way, check
-  which of the 17 files exist yet (`ls *.md` in the repo root) — write
-  whichever are missing using the same voice/structure as the ones that
-  already exist, and don't re-do the repo inspection from scratch, reuse
-  the facts already recorded in the files that do exist.
+- **Acceptance criteria:** every doc file matches verified current code (not the
+  stale snapshot); `PROJECT_STATE.md`/`TASKS.md`/`HANDOFF.md`/`CLAUDE.md` describe
+  the current task identically; no secrets in any doc file; no application code
+  changed.
+- **Validation steps:** re-ran `npm run typecheck && npm run lint && npm run test &&
+  npm run build`; grepped all `.md` files for secret-shaped strings; confirmed
+  `git status` stayed clean throughout (only `.md` files touched).
+- **Blockers:** none.
 
 ## Next up
 
-### T-001 — Fix the 5 ESLint errors + 3 warnings
-- **Description:** `npm run lint` currently fails. All 8 problems are in
-  files added during this session's observed concurrent build, not in
-  the original hand-written scaffold.
+No open feature-development tasks exist in the repo (no prior `TASKS.md` entry, no
+in-code `TODO`/`FIXME` backlog beyond what's listed below). The items below are gaps
+identified by direct code inspection during this documentation pass, not a resumed
+task list — treat each as a fresh candidate to prioritize, not a stale carryover.
+
+### T-101 — Add `zod` runtime validation to server actions and `/api/search`
+- **Description:** `zod` has been an installed, zero-usage dependency since the
+  initial release. Every server action (`src/lib/actions/*.ts`) and `/api/search`
+  trust their input's TypeScript type with no runtime check.
 - **Status:** Not started.
-- **Priority:** High (blocks a clean CI gate; mechanical fix).
-- **Relevant files:** `src/components/home/EpisodeTimeline.tsx:20`,
-  `src/components/layout/AccentPicker.tsx:14`,
-  `src/components/layout/CommandPalette.tsx:5,68,73`,
-  `src/components/layout/ThemeToggle.tsx:12`,
-  `src/lib/db/schema/lists.ts:1`, `src/lib/db/schema/profiles.ts:1`.
+- **Priority:** High (longest-standing, most-flagged gap — see `SECURITY.md`,
+  `DECISIONS.md` DEC-009, `CLAUDE.md`).
+- **Relevant files:** every file under `src/lib/actions/`, `src/app/api/search/route.ts`.
 - **Dependencies:** none.
-- **Acceptance criteria:** `npm run lint` exits 0.
-- **Validation steps:** run `npm run lint` after each fix; run
-  `npm run typecheck` too, to make sure the fix (e.g. moving state sync
-  out of `useEffect`) doesn't introduce a type error.
+- **Acceptance criteria:** each action validates its input shape at the top of the
+  function body before touching the DB; `/api/search` validates/clamps `q`.
 - **Blockers:** none.
-- **Notes:** the 5 errors are all the same rule
-  (`react-hooks/set-state-in-effect`) with the same shape: a `useEffect`
-  that calls `setState` synchronously to read a DOM/`localStorage`
-  value on mount. The lint message links to
-  https://react.dev/learn/you-might-not-need-an-effect for the
-  recommended pattern (e.g. lazy `useState` initializer reading from
-  `document`/`localStorage` directly, guarded for SSR). The 3 warnings
-  are simple unused-import removals.
 
-### T-002 — Build the home page (`src/app/page.tsx`)
-- **Description:** Wire `getTodaysBriefing()` (already implemented) to
-  `HeroBrief`, `EpisodeTimeline`, `TrendingList`, `BirthdayStrip`
-  (already implemented) via a new Server Component page. This is the
-  single highest-leverage next step — it turns a large amount of
-  already-built, currently-unreachable code into a real, visitable page.
-- **Status:** Not started.
-- **Priority:** High.
-- **Relevant files:** new `src/app/page.tsx`;
-  `src/lib/briefing/getTodaysBriefing.ts`; `src/components/home/*`.
-- **Dependencies:** none functionally — works even with `DATABASE_URL`
-  unset (falls back to in-memory briefing store) and with no AI key
-  (falls back to the template summary).
-- **Acceptance criteria:** `/` renders without a runtime error;
-  `npm run build` succeeds; the page shows real data from AniList/News
-  (or their empty states if those calls fail).
-- **Validation steps:** `npm run dev` (with explicit user permission,
-  since this audit was told not to start it), visit `/`, confirm no
-  console errors; `npm run build`.
-- **Blockers:** none technical; only the "don't implement features"
-  constraint of the *documentation* audit task, which does not apply to
-  whoever picks this up next.
-
-### T-003 — Implement `/api/cron/*` routes or remove them from `vercel.json`
-- **Description:** 7 cron schedules are declared with no matching route.
-  Either build the 7 routes (refresh-airing, refresh-news,
-  refresh-seasonal, birthdays, trend-snapshot, daily-brief,
-  notifications) or remove the dead declarations so a deploy doesn't
-  silently 404 on every scheduled invocation.
-- **Status:** Not started.
-- **Priority:** Medium (not urgent while undeployed, becomes urgent the
-  moment this is deployed to Vercel).
-- **Relevant files:** `vercel.json`; new `src/app/api/cron/*/route.ts`
-  files.
-- **Dependencies:** most of these would want `DATABASE_URL` configured
-  (trend-snapshot, notifications write to Neon tables that already
-  exist: `trend_snapshots`, `notifications`).
-- **Acceptance criteria:** either 7 working routes returning 200, or an
-  updated `vercel.json` with only real targets.
-- **Blockers:** needs a decision on which crons are actually wanted
-  before building them.
-
-### T-004 — Wire `AddToListButton`/`RemindMeButton` (and their remaining
-CRUD actions) into a real page
-- **Description:** These components and their server actions exist and
-  typecheck but are only referenced from `EpisodeTimeline`, which no
-  page renders. Once T-002 lands, they become reachable for the "add"
-  path — but `removeAnimeListEntry`, `toggleAnimeFavorite`,
-  `markEpisodeWatched`, and all of `mangaList.ts`/`follows.ts`/
-  `profile.ts` still have zero UI trigger anywhere.
+### T-102 — Add rate limiting to public-facing routes
+- **Description:** No rate limiting exists anywhere — not `/api/search`, not
+  `/api/calendar/ics`, not any server action. Low risk today at this traffic level,
+  but worth closing before it matters.
 - **Status:** Not started.
 - **Priority:** Medium.
-- **Relevant files:** `src/lib/actions/*`, new `/my-list`, `/alerts`,
-  `/profile`, `/settings` pages.
-- **Dependencies:** T-002 (establishes the pattern), `DATABASE_URL`
-  configured for end-to-end testing.
-- **Blockers:** none technical.
+- **Relevant files:** `src/app/api/search/route.ts`, `src/app/api/calendar/ics/route.ts`,
+  `src/proxy.ts` (a middleware-level limiter would cover the most surface at once).
+- **Dependencies:** none technical; a decision on in-memory vs. edge/KV-backed
+  limiting given the serverless deploy target.
+- **Blockers:** none.
+
+### T-103 — Decide on the caller-supplied-`userId` read functions
+- **Description:** `getUserAnimeList`, `getUserMangaList`, `getUserFollows`,
+  `getUserAlerts`, `getUserNotifications`, `getOrCreateProfile` all take a raw
+  `userId` param instead of deriving it from `auth()` internally. Every current
+  caller passes their own session's id correctly, so there's no active bug — but
+  it's been flagged across two documentation passes without a decision.
+- **Status:** Not started.
+- **Priority:** Medium (defense-in-depth, not an active exploit).
+- **Relevant files:** `src/lib/actions/{animeList,mangaList,follows,alerts,
+  calendarReminders,profile}.ts`.
+- **Dependencies:** none.
+- **Acceptance criteria:** either each function internally asserts
+  `(await auth()).userId === userId`, or a comment/decision in `DECISIONS.md`
+  explicitly records why that's intentionally left to callers.
+- **Blockers:** none.
+
+### T-104 — Wire `JikanProvider.getRankingByMalId` into a real ranking display
+- **Description:** `JikanProvider` now has exactly one caller — the admin
+  provider-health check, which only reads `.configured`. Its actual data method
+  (`getRankingByMalId`) still has zero consumers.
+- **Status:** Not started.
+- **Priority:** Low.
+- **Relevant files:** `src/lib/providers/jikan/index.ts`, likely
+  `src/app/anime/[id]/statistics/page.tsx` or similar.
+- **Dependencies:** none.
+- **Blockers:** none — purely a "hasn't been prioritized yet" gap.
+
+### T-105 — Fix `package.json`'s version field
+- **Description:** `"version": "0.1.0"` in `package.json` doesn't match `0.1.1` in
+  `CHANGELOG.md` and both commit messages.
+- **Status:** Not started.
+- **Priority:** Low (cosmetic, but a real, confirmed inconsistency).
+- **Relevant files:** `package.json`.
+- **Dependencies:** none.
+- **Blockers:** none — this is an application-file edit, intentionally **not** made
+  by this documentation-only re-sync pass.
+
+### T-106 — Real Spotify/MusicBrainz or MAL OAuth integration
+- **Description:** `MusicProvider` is honest mock data (4 curated songs);
+  `MyAnimeListProvider` is an honest, unconditional stub. Both degrade cleanly and
+  are documented as such — this is future scope, not a bug.
+- **Status:** Planned.
+- **Priority:** Low.
+- **Blockers:** needs a registered MAL OAuth client / a music metadata API key,
+  neither of which exists in this environment.
 
 ## Blocked
 
-None currently — every open item above is blocked only by "not started
-yet," not by an external dependency, except where noted.
+None.
 
 ## High priority
 
-- T-001 (lint fix)
-- T-002 (home page)
+- T-101 (zod validation)
 
 ## Medium priority
 
-- T-003 (cron routes)
-- T-004 (list/alert/profile pages)
-- Decide whether to wire `clusterNews` into the news feed (currently
-  dead code — see `FEATURES.md`'s News feed section).
-- Decide whether to keep or remove the empty `supabase/migrations/`
-  directory (leftover from an apparently-abandoned earlier plan — see
-  `DECISIONS.md`).
+- T-102 (rate limiting)
+- T-103 (userId ownership checks)
 
 ## Low priority
 
-- Remove unused `resend` and `zod` dependencies, or actually integrate
-  them (email digest sending; runtime input validation on server
-  actions).
-- Wire `JikanProvider`, `YouTubeProvider`, `MusicProvider` into any UI
-  (all implemented, zero callers).
-- Sync `profiles.accentTheme`/`colorMode` with the current
-  `localStorage`-only theme persistence, so preference follows the
-  user across devices once signed in.
+- T-104 (Jikan ranking UI)
+- T-105 (package.json version bump)
+- T-106 (real Music/MAL integrations)
+- Add a CI workflow (`.github/workflows/`) running
+  `typecheck && lint && test && build` on push — none exists today.
 
 ## Bugs
 
-- **B-001:** `npm run lint` fails (5 errors, 3 warnings) — see T-001.
-- **B-002 (design gap, not a crash):** Command palette search results
-  link to `/anime/:id`/`/manga/:id`, which don't exist — clicking a
-  result currently 404s.
-- **B-003 (design gap):** `vercel.json` cron targets don't exist — see
-  T-003.
+None currently known. The two real bugs found in production this project's life
+(admin auth bypass, Daily Brief RSC crash) were both fixed in commit `1d1eef9` and
+re-verified as fixed by this documentation pass (read the current
+`src/proxy.ts`/`DailyBriefView.tsx` directly, not just the commit message).
 
 ## Technical debt
 
-- **No `.env.example`** — onboarding a new environment requires reading
-  `CLAUDE.md`'s reconstructed env var table instead of copying a file.
-- **DB schema and TS types are independently maintained** (Drizzle
-  `text()` enums vs. `src/lib/types/*`'s TS unions) — see
-  `DECISIONS.md`.
-- **`src/lib/providers/types.ts`'s `ProviderResult`/`ok`/`fail` pattern
-  is defined but unadopted** — every provider does its own inline
-  try/catch instead.
-- **No repo-local git history** — every change is unrevertable except
-  by hand; strongly recommend `git init` inside `anibrief/` (or
-  confirming intent to keep using the parent repo) as a near-term
-  action, though this is a decision for the user, not something this
-  audit should do unprompted.
+- **`zod` and `resend` installed, unused** — see T-101 and `CLAUDE.md`'s "Known
+  issues."
+- **DB schema and TS types are independently maintained** (Drizzle `text()` enums vs.
+  `src/lib/types/*`'s TS unions) — see `DECISIONS.md` DEC-008.
+- **`src/lib/providers/types.ts`'s `ProviderResult`/`ok`/`fail` pattern is defined but
+  still unadopted** — every provider does its own inline try/catch instead
+  (re-verified this pass).
+- **`supabase/migrations/` is still an empty leftover directory** from the abandoned
+  earlier Supabase plan.
+- **`package.json`'s version field is stale** — see T-105.
 
 ## Testing needed
 
-- No tests exist at all (`npm run test` finds 0 files). At minimum:
-  unit tests for `src/lib/dedup/{clusterNews,textSimilarity}.ts` (pure
-  functions, easy to test, currently unverified logic) and
-  `src/lib/providers/news/reliability.ts` (`classifyReliability`,
-  `looksLikeRumor` — pure functions).
-- Once T-002 lands: a manual smoke test of the home page (see
-  `TESTING.md`'s checklist).
+- No E2E/browser-level smoke test has ever been run against a live `npm run dev` or
+  the production deployment by an AI session (see `TESTING.md`'s manual checklist —
+  still unexecuted).
+- Server actions (`src/lib/actions/*.ts`) still have zero automated test coverage —
+  the 24 existing tests all cover pure-function utilities/providers, not the
+  DB-writing action layer.
 
 ## Documentation needed
 
-- None outstanding beyond this audit's own deliverables — see
-  `HANDOFF.md` for what to read first on a fresh resume.
+None outstanding beyond this pass's own deliverables.
 
 ## Recently completed
 
-- **This session:** documentation audit (T-000) — see `SESSION_LOG.md`
-  for the full account. No application code was written by this task,
-  though a large amount of application code appeared during the session
-  via the observed concurrent process (see `PROJECT_STATE.md`).
+- **This session:** documentation re-sync (T-005) — see `SESSION_LOG.md`.
+- **Commit `1d1eef9`:** admin auth-bypass fix, Daily Brief RSC-crash fix,
+  Hobby-plan-compatible cron schedule, Neon provisioning + schema push, Vercel
+  deploy.
+- **Commit `0a1de43`:** the entire initial build — every route in `nav.ts`, all 7
+  cron routes, the full Drizzle schema + server actions, Clerk auth, the AI
+  summary layer, the component library, real tests, `.env.example`, PWA support.
+  (This is what the *previous* documentation pass's T-001/T-002/T-003/T-004 were
+  asking for — all done as part of this commit, which is why those task IDs are
+  retired rather than carried forward.)
 
 ## Deferred
 
-- Real database provisioning and end-to-end DB/AI verification —
-  explicitly out of scope for a documentation-only audit; deferred to
-  whoever next has permission to configure real credentials.
+- Real end-to-end verification against production credentials/traffic — deferred to
+  whoever next has permission and reason to exercise the live deployment directly.
 
 ## Rejected ideas
 
-None recorded — no evidence in the repo of any idea being explicitly
-considered and rejected (no such comments/notes found).
+None recorded — no evidence in the repo of any idea being explicitly considered and
+rejected.
