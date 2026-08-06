@@ -3,12 +3,18 @@
 > **Re-sync note (2026-08-06, ~15:35 MST):** the previous documentation pass (written
 > ~05:59–06:15 MST the same day) was locked against a snapshot that turned out to be
 > mid-flight — the repo kept growing (concurrent development) right up until it was
-> committed. Two commits have since landed: `0a1de43` ("Initial release: AniBrief
-> v0.1.1", ~176 files) and `1d1eef9` ("0.1.1: fix admin auth bypass + daily-brief RSC
-> crash, deploy to Vercel"). This file, and its 16 sibling memory files, have now been
-> re-verified against the actual current committed code (git-tracked, 225 files),
-> not against the earlier snapshot. See `SESSION_LOG.md`'s newest entry for exactly
-> what was re-checked and how.
+> committed. Three commits have since landed: `0a1de43` ("Initial release: AniBrief
+> v0.1.1", ~176 files), `1d1eef9` ("0.1.1: fix admin auth bypass + daily-brief RSC
+> crash, deploy to Vercel"), and — landing **during this very re-sync pass**, a
+> real-time repeat of this repo's concurrent-development pattern — `91b23c4` ("0.1.2:
+> fix CSP blocking Clerk's sign-up CAPTCHA"). This file, and its 16 sibling memory
+> files, have now been re-verified against the actual current committed code.
+> **Process note:** `91b23c4` was authored and pushed to `origin/main` by a separate
+> process partway through this documentation pass, not by this pass itself, and its
+> commit happened to sweep up this pass's then-unsaved-to-git edits to this file,
+> `PROJECT_STATE.md`, and `TASKS.md` along with its own `next.config.ts`/
+> `CHANGELOG.md` changes. This pass never ran `git commit`, `git push`, or any
+> destructive git command. See `SESSION_LOG.md`'s newest entry for the full account.
 
 ## Project identity
 
@@ -28,13 +34,16 @@ evidence of intent, not as something you can open and read.
 
 ## Current status
 
-As of this re-sync (2026-08-06, git HEAD `1d1eef9`), AniBrief is **a working, deployed
+As of this re-sync (2026-08-06, git HEAD `91b23c4`), AniBrief is **a working, deployed
 product**, not the early-stage scaffold the earlier documentation pass described:
 
 - **Real git history exists.** `anibrief/` is tracked inside the `~/Projects` parent
-  repo, on branch `main`, 2 commits, working tree clean (`git status` → nothing to
-  commit) as of this re-sync. `git log --oneline`: `1d1eef9` (auth/RSC fixes + deploy)
-  on top of `0a1de43` (initial release).
+  repo, on branch `main`, 3 commits as of this re-sync. `git log --oneline`:
+  `91b23c4` (CSP CAPTCHA fix) on top of `1d1eef9` (auth/RSC fixes + deploy) on top of
+  `0a1de43` (initial release). **Working tree is not clean at the moment this file
+  is being written** — this pass's own in-progress documentation edits to the
+  remaining `.md` files are still unstaged, by design (only committed when/if the
+  user explicitly asks). Re-run `git status` to see current state.
 - **Deployed to Vercel**, live at https://anibrief.vercel.app, with Clerk auth and a
   Neon Postgres database provisioned through Vercel's integration (schema pushed).
 - **Every route in `src/lib/nav.ts` (15 items) has a real `page.tsx`.** `npm run build`
@@ -59,24 +68,37 @@ product**, not the early-stage scaffold the earlier documentation pass described
 - **`npm run typecheck` passes clean.**
 - **`npm run build` succeeds** (verified this re-sync; ~44 routes, 11.9s static-page
   generation).
-- Two real production bugs were found and fixed on top of the initial release (commit
-  `1d1eef9`): an **admin-dashboard auth bypass** (a signed-out request could briefly
-  receive rendered `/admin` content before a layout-level `redirect()` took effect,
-  due to an RSC-streaming timing quirk in this Next.js version — fixed by also
-  blocking `/admin` in `src/proxy.ts` middleware, before any rendering starts) and a
-  **Daily Brief page crash** (a Server Component was passing a render-prop function
-  into a Client Component, which isn't serializable across that boundary — fixed by
-  restructuring `DailyBriefView`/`BriefModeToggle` to pass only plain data down).
+- **Real security headers exist**: `next.config.ts` sets a Content-Security-Policy
+  (scoped to exactly the hosts the app talks to — Clerk, AniList, Jikan, Google
+  News, Google APIs, Cloudflare Turnstile) plus `X-Content-Type-Options`,
+  `X-Frame-Options: DENY`, `Referrer-Policy`, and `Permissions-Policy` on every
+  route. This was missing from every prior documentation pass's `SECURITY.md` —
+  it existed since the initial release but was never inventoried. See
+  `SECURITY.md`'s new "Security headers" section.
+- Three real production bugs were found and fixed on top of the initial release:
+  an **admin-dashboard auth bypass** (commit `1d1eef9`) — a signed-out request could
+  briefly receive rendered `/admin` content before a layout-level `redirect()` took
+  effect, due to an RSC-streaming timing quirk in this Next.js version — fixed by
+  also blocking `/admin` in `src/proxy.ts` middleware, before any rendering starts;
+  a **Daily Brief page crash** (commit `1d1eef9`) — a Server Component was passing
+  a render-prop function into a Client Component, which isn't serializable across
+  that boundary — fixed by restructuring `DailyBriefView`/`BriefModeToggle` to pass
+  only plain data down; and a **sign-up CAPTCHA failure** (commit `91b23c4`) —
+  Clerk's bot-protection CAPTCHA (Cloudflare Turnstile) loads from
+  `challenges.cloudflare.com`, which the CSP header wasn't allowlisting, silently
+  blocking sign-up for every visitor — fixed by adding that host to `script-src`/
+  `connect-src`/`frame-src` in `next.config.ts`.
 - **Locally, this environment has Clerk + a real `DATABASE_URL` configured** (via
   Vercel's Neon integration — confirmed by variable *names* only in `.env.local`, not
   values). **No AI key** (`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`), **no
   `YOUTUBE_API_KEY`**, **no `ADMIN_USER_IDS`**, **no `CRON_SECRET`** are set locally —
   those features run in their documented graceful-degradation/"not configured" paths
   in this environment (production may differ; not verified from inside this session).
-- **`package.json`'s `"version"` field still reads `0.1.0`**, while the changelog and
-  both commit messages call this `0.1.1` — a real, minor inconsistency, left as-is
-  (bumping it would be an application-file change outside this doc-only re-sync's
-  scope). Flag it if you touch `package.json` for any other reason.
+- **`package.json`'s `"version"` field still reads `0.1.0`**, while `CHANGELOG.md`
+  now documents through `0.1.2` and the three commit messages call this
+  `0.1.1`/`0.1.1`/`0.1.2` — a real, growing inconsistency, left as-is (bumping it
+  would be an application-file change outside this doc-only re-sync's scope). Flag
+  it if you touch `package.json` for any other reason.
 
 ## Technology stack
 
@@ -235,7 +257,9 @@ saved news, calendar reminders) lives in Neon Postgres via Drizzle, keyed by Cle
 clear "sign in" / "not configured" error or an in-memory fallback (briefing store
 only) rather than crashing. Auth is Clerk end-to-end: `proxy.ts` (middleware, now also
 enforcing the `/admin` gate) + `ClerkProvider` in the root layout +
-`SignedIn`/`SignedOut`/`useUser()` in client components + `auth()` in server actions
+`<Show when="signed-in">`/`<Show when="signed-out">` (this project's Clerk SDK
+version does not export `SignedIn`/`SignedOut` — see `CONTRIBUTING.md`) +
+`useUser()` in client components + `auth()` in server actions
 and route handlers. See `ARCHITECTURE.md` for the full diagram and request lifecycle.
 
 ## Coding conventions
@@ -400,8 +424,17 @@ checklist and the two production fixes shipped in `1d1eef9`.
   flag it before adding a new caller.
 - **No rate limiting anywhere** — `/api/search`, `/api/calendar/ics`, and every server
   action have no request-rate protection.
-- **`package.json`'s version field (`0.1.0`) doesn't match the changelog/commit
-  messages (`0.1.1`).**
+- **`package.json`'s version field (`0.1.0`) doesn't match `CHANGELOG.md`
+  (through `0.1.2`) or the commit messages.**
+- **A third wave of live, uncommitted concurrent development was observed near the
+  end of this documentation pass** — an in-progress Spotify integration (schema +
+  migration, no provider/UI/dependency yet) and a small `AppShell.tsx` sidebar
+  change. Not made by this pass. See `PROJECT_STATE.md`'s ADDENDUM and `TASKS.md`
+  T-108. **Run `git status` before trusting this file's "Current status" section**
+  — this repo has now shown this pattern three times in one day.
+- **No CSP/security-header regression test exists** — the sign-up CAPTCHA breakage
+  (commit `91b23c4`) shipped silently because nothing automated checks that the CSP
+  allowlists every host the app's own third-party scripts actually load from.
 - **`supabase/migrations/` is an empty leftover directory** from an abandoned earlier
   plan — harmless, never cleaned up.
 - **No CI workflow** (no `.github/workflows/`).

@@ -1,11 +1,12 @@
 # TASKS.md — Active Execution Queue
 
 > Re-synced 2026-08-06 ~15:35 MST against the actual current git state (`main`,
-> commit `1d1eef9`, working tree clean). The previous version of this file was
+> now at commit `91b23c4` — a third commit that landed live during this very
+> re-sync pass, see `SESSION_LOG.md`). The previous version of this file was
 > written against a stale, mid-flight snapshot from earlier the same day — every
 > task below (T-001 through T-004 in the old version) has since been completed by
-> the work that landed in commits `0a1de43`/`1d1eef9`. See "Recently completed"
-> and `SESSION_LOG.md` for the full account.
+> the work that landed in commits `0a1de43`/`1d1eef9`/`91b23c4`. See "Recently
+> completed" and `SESSION_LOG.md` for the full account.
 
 ## Current task
 
@@ -95,6 +96,38 @@ task list — treat each as a fresh candidate to prioritize, not a stale carryov
 - **Blockers:** none — this is an application-file edit, intentionally **not** made
   by this documentation-only re-sync pass.
 
+### T-108 — Finish (or evaluate) the in-progress, uncommitted Spotify integration
+- **Description:** Near the end of this documentation pass, uncommitted changes
+  appeared in the working tree: `src/lib/db/schema/spotify.ts` (a
+  `userSpotifyConnections` OAuth-token table), a generated-but-unapplied migration
+  (`drizzle/0001_brief_spencer_smythe.sql`), one new export in
+  `src/lib/db/schema/index.ts`, and a small unrelated `AppShell.tsx` sidebar change
+  (a "What's New" link). No provider file, no UI, no `package.json` dependency
+  exists yet for Spotify — this is very early, schema-first work, not attributable
+  to this documentation pass (which only edits `.md` files). See
+  `PROJECT_STATE.md`'s ADDENDUM.
+- **Status:** In progress (not by this session), uncommitted as of this pass's end.
+- **Priority:** Not this pass's to set — flagging only.
+- **Relevant files:** `src/lib/db/schema/spotify.ts`, `drizzle/0001_*`,
+  `src/lib/db/schema/index.ts`, `src/components/layout/AppShell.tsx`.
+- **Blockers:** none noted; simply incomplete as of this pass's end.
+- **Note:** whoever picks this up next should run `git status`/`git diff` first —
+  this may already be finished, committed, or further along by the time you read
+  this.
+
+### T-107 — Add a CSP/security-header regression check
+- **Description:** The just-fixed sign-up CAPTCHA bug (commit `91b23c4`) shipped
+  because nothing automated verifies the CSP in `next.config.ts` actually
+  allowlists every host the app's own third-party scripts load from
+  (`challenges.cloudflare.com` was missing). A manual visual check or a simple
+  test that renders the sign-up page and asserts no CSP violation is logged would
+  have caught this before it reached production.
+- **Status:** Not started.
+- **Priority:** Medium.
+- **Relevant files:** `next.config.ts`, a new test or manual-checklist item.
+- **Dependencies:** none.
+- **Blockers:** none.
+
 ### T-106 — Real Spotify/MusicBrainz or MAL OAuth integration
 - **Description:** `MusicProvider` is honest mock data (4 curated songs);
   `MyAnimeListProvider` is an honest, unconditional stub. Both degrade cleanly and
@@ -116,6 +149,7 @@ None.
 
 - T-102 (rate limiting)
 - T-103 (userId ownership checks)
+- T-107 (CSP/security-header regression check)
 
 ## Low priority
 
@@ -127,10 +161,12 @@ None.
 
 ## Bugs
 
-None currently known. The two real bugs found in production this project's life
-(admin auth bypass, Daily Brief RSC crash) were both fixed in commit `1d1eef9` and
-re-verified as fixed by this documentation pass (read the current
-`src/proxy.ts`/`DailyBriefView.tsx` directly, not just the commit message).
+None currently known. The three real bugs found in production this project's life
+(admin auth bypass, Daily Brief RSC crash — both commit `1d1eef9`; sign-up CAPTCHA
+blocked by an incomplete CSP — commit `91b23c4`, which landed live during this very
+documentation pass) are all fixed, re-verified by reading the current
+`src/proxy.ts`/`DailyBriefView.tsx`/`next.config.ts` directly, not just trusting
+the commit messages.
 
 ## Technical debt
 
@@ -161,6 +197,9 @@ None outstanding beyond this pass's own deliverables.
 ## Recently completed
 
 - **This session:** documentation re-sync (T-005) — see `SESSION_LOG.md`.
+- **Commit `91b23c4`** (landed live during this documentation session, authored by
+  a separate process — see `SESSION_LOG.md`): fixed a CSP gap that silently broke
+  sign-up's Cloudflare Turnstile CAPTCHA for every visitor.
 - **Commit `1d1eef9`:** admin auth-bypass fix, Daily Brief RSC-crash fix,
   Hobby-plan-compatible cron schedule, Neon provisioning + schema push, Vercel
   deploy.

@@ -1,299 +1,280 @@
 # FEATURES.md — Feature-by-Feature Status
 
-> Snapshot: 2026-08-06 05:59:28 MST. Status classifications per the
-> audit's scale: Verified complete / Mostly complete / Partially
-> implemented / UI only / Backend only / Mocked / Planned / Broken /
-> Deprecated / Unable to verify.
+> Re-synced 2026-08-06 ~15:35 MST against the actual current git state (commit
+> `1d1eef9`, working tree clean). The previous version of this file classified
+> almost everything as "Backend only" / "Planned" / "Schema-only" against a stale,
+> pre-commit snapshot — that snapshot's build has since landed and been deployed.
+> Every classification below was re-checked by reading the current `src/app/**/page.tsx`,
+> the components it renders, and the server actions/providers it calls — not
+> inferred from file existence alone. Status scale: Verified complete / Mostly
+> complete / Partially implemented / UI only / Backend only / Mocked / Planned /
+> Broken / Deprecated / Unable to verify.
 
-## Daily Brief (home-page briefing)
+## Home dashboard (`/`)
 
-**Status: Partially implemented — backend + components complete, zero
-routes.** No page renders this feature; it cannot be reached by a user.
+**Status: Verified complete.** `src/app/page.tsx` (46 lines) calls
+`getTodaysBriefing()` and renders `HeroBrief`, `EpisodeTimeline`, `TrendingList`,
+`BirthdayStrip` — exactly the wiring the previous documentation pass listed as the
+single highest-leverage missing piece. It now exists, builds successfully, and is
+part of the 44-route production build.
 
-- **Purpose:** A single daily summary — episodes airing today, top
-  news, trending titles, birthdays — with an optional AI-written
-  editorial intro.
-- **User flow (intended):** Land on `/` → see `HeroBrief` (greeting +
-  AI-or-template summary + stat tiles) → `EpisodeTimeline`,
-  `TrendingList`, `BirthdayStrip` below.
-- **Frontend files:** `src/components/home/{HeroBrief,StatTile,
-  EpisodeTimeline,TrendingList,BirthdayStrip}.tsx` — all exist, all
-  typecheck, none are imported by any `page.tsx`.
-- **Backend files:** `src/lib/briefing/{buildBriefing,getTodaysBriefing,
-  store}.ts`.
-- **DB dependencies:** `briefings` table (Neon) when `DATABASE_URL` set;
-  otherwise an in-process `Map` (lost on cold start).
-- **External integrations:** AniList (airing, trending, birthdays),
-  Google News RSS, optionally Anthropic/OpenAI.
-- **Env vars:** none required for the template path; `ANTHROPIC_API_KEY`
-  or `OPENAI_API_KEY` (+ `AI_PROVIDER`) to enable the AI summary.
-- **Permissions:** none — briefing content is public/anonymous.
-- **Validation:** the AI prompt explicitly instructs the model to use
-  only supplied facts and not invent numbers; no schema validation on
-  the AI's output text itself (it's just inserted as a string).
-- **Error/loading/empty states:** `EmptyState`/`ErrorState` primitives
-  exist and are used by `AnimeGrid`/`NewsList`/`EpisodeTimeline`, but
-  since no page calls `getTodaysBriefing()`, there's no loading skeleton
-  wired for the hero/stat-tile section itself.
-- **Edge cases handled in code:** zero episodes today (falls back to a
-  template sentence), zero news (same), AI call failure (falls back to
-  template, logs a warning).
-- **Tests:** none.
-- **Known issues:** unreachable (no route); `getTodaysBriefing`'s 20-min
-  staleness window is undermined by the in-memory fallback's per-instance
-  scope on serverless.
-- **Remaining work:** create `src/app/page.tsx` calling
-  `getTodaysBriefing()` and rendering the home components.
+- **Purpose:** Live "Today in Anime" hero brief + stat tiles, today's episode
+  timeline (local-timezone converted, with streaming links), top stories, trending
+  titles, birthday strip.
+- **Backend:** `src/lib/briefing/{buildBriefing,getTodaysBriefing,store}.ts`.
+- **DB dependency:** `briefings` table when `DATABASE_URL` is set; in-memory `Map`
+  fallback otherwise.
+- **Tests:** none directly on the page; the pure-function layers it depends on
+  (`mapMedia`, `classifyReliability`) have unit tests.
+- **Known issues:** none found this pass. **Unverified:** real-browser rendering
+  (no `npm run dev` session was run this pass) — build-time static generation of `/`
+  succeeded, which is a meaningful but not complete signal.
 
-## Anime/manga search (command palette)
+## Daily Brief (`/daily-brief`, `/daily-brief/archive`, `/daily-brief/archive/[date]`)
 
-**Status: Mostly complete.** The one feature that is actually wired
-end-to-end and reachable today (the palette itself, via `AppShell`,
-which is mounted by `layout.tsx`, which wraps every route).
+**Status: Verified complete**, including a real production bug fix.
 
-- **Purpose:** Fast keyboard-driven search + navigation.
-- **User flow:** ⌘K or `/` anywhere → type 2+ chars → debounced fetch to
-  `/api/search` → click a result → navigates to `/anime/:id` or
-  `/manga/:id` (**these routes don't exist yet**, so this currently
-  leads to a 404/default not-found).
-- **Frontend files:** `src/components/layout/CommandPalette.tsx`.
-- **Backend files:** `src/app/api/search/route.ts` →
-  `AniListProvider.searchMedia`.
-- **DB dependencies:** none.
-- **External integrations:** AniList GraphQL.
-- **Env vars:** none.
-- **Permissions:** none, public.
-- **Validation:** query must be ≥2 chars trimmed, else returns empty
-  arrays.
-- **Error/loading/empty states:** "No matches" message; no explicit
-  loading spinner (relies on fetch latency being low); AbortController
-  cancels stale requests.
-- **Tests:** none.
-- **Known issues:** unused `Image` import (lint warning); navigates to
-  nonexistent detail routes.
-- **Remaining work:** build `/anime/[id]` and `/manga/[id]` pages.
+- **Purpose:** Full daily briefing with Quick/Standard/Deep modes, listen-aloud,
+  share actions, persisted archive.
+- **Frontend:** `DailyBriefView.tsx`, `BriefModeToggle.tsx`, `BriefActions.tsx`.
+- **Production bug found and fixed (commit `1d1eef9`):** `DailyBriefView` (a Server
+  Component) was passing a render-prop *function* into a Client Component
+  (`BriefModeToggle`) — functions aren't serializable across the RSC boundary, which
+  crashed the page in production. Fixed by restructuring so all section data flows
+  down as plain props; re-verified this pass by reading the current file — no
+  function props remain in that boundary.
+- **Known issues:** none found. `getTodaysBriefing`'s 20-minute staleness window is
+  still nominally undermined by the in-memory fallback's per-instance scope on
+  serverless when `DATABASE_URL` is unset — this is a real, honestly-documented
+  limitation of the fallback path, not a bug in the DB-backed path.
+
+## News feed (`/news`)
+
+**Status: Verified complete**, including the previously-dead-code dedup path now
+being wired in.
+
+- **Purpose:** Aggregated multi-tab news terminal (Latest/Top/Following/Anime/
+  Manga/Music/Industry/Streaming/Games/Movies/People/Rumors), reliability labeling,
+  rumor detection, cross-source duplicate clustering.
+- **Frontend:** `NewsCard`, `NewsList`, `NewsClusterCard`.
+- **Backend:** `NewsFeedProvider` + `reliability.ts` + `clusterNews.ts` — **`clusterNews`
+  is now called from `src/app/news/page.tsx`**, resolving the previous pass's "dead
+  code, never wired in" finding.
+- **Tests:** `clusterNews`, `textSimilarity`, `classifyReliability`, `looksLikeRumor`
+  all have passing unit tests (12 of the 24 total).
+
+## Command palette / search (⌘K, `/api/search`)
+
+**Status: Verified complete**, unchanged from the previous pass's assessment except
+that its detail-page links now resolve instead of 404ing.
+
+- **Frontend:** `CommandPalette.tsx`.
+- **Backend:** `GET /api/search` → `AniListProvider.searchMedia`.
+- **Known issues fixed:** the previous pass flagged that search results linked to
+  `/anime/:id`/`/manga/:id`, which didn't exist — **both routes now exist** (with 5
+  and 3 sub-tab routes respectively), so this is resolved.
+- **Remaining known issue:** no rate limiting on `/api/search` (unchanged finding).
 
 ## Authentication (sign in / sign up / session)
 
-**Status: Mostly complete** — Clerk is fully wired at the
-infrastructure level (middleware, provider, hosted pages, header UI),
-but **unverified**: no real Clerk keys were confirmed functional (only
-key *names* were observed in `.env.local`, values never read/tested),
-and no browser session was ever exercised (`npm run dev` was
-intentionally not started).
+**Status: Verified complete**, and now exercised by real UI across the app (My
+List, Alerts, Profile, Settings, Admin all gate on it) rather than being wired but
+unreachable.
 
-- **Purpose:** User accounts, gating personalization features.
-- **User flow:** Click "Sign in" (header, or inline on gated actions) →
-  Clerk modal or `/sign-in` page → redirected back per
-  `NEXT_PUBLIC_CLERK_*_FALLBACK_REDIRECT_URL`.
-- **Frontend files:** `src/app/sign-in/[[...sign-in]]/page.tsx`,
-  `sign-up/[[...sign-up]]/page.tsx`, `AppShell.tsx` (header
-  `SignedIn`/`SignedOut` UI).
-- **Backend files:** `src/proxy.ts`, every server action's
-  `requireUser()`.
-- **DB dependencies:** `profiles` table (created lazily on first
-  `getOrCreateProfile` call — but nothing calls that function yet
-  either, see Profile/Settings below).
-- **External integrations:** Clerk.
-- **Env vars:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
-  4 optional URL overrides.
-- **Permissions:** binary signed-in/signed-out only, no roles.
-- **Tests:** none.
-- **Known issues:** unverified end-to-end (no live test performed this
-  session, per the task's "no dev server" constraint).
-- **Remaining work:** verify a real sign-in flow once a dev environment
-  with real Clerk keys can be exercised.
+- **Backend:** `src/proxy.ts`, every server action's `requireUser()`/`requireAdmin()`.
+- **Known issues:** still not exercised in a real browser session by any AI-run
+  verification pass (no `npm run dev` was started this pass either) — "typechecks
+  and builds" is not the same claim as "a real sign-in flow works," though the
+  production deployment being live and the code being unchanged in shape since the
+  initial build both weigh toward this working.
 
-## Anime/Manga list tracking ("My List")
+## Anime/Manga list tracking ("My List", `/my-list`)
 
-**Status: Backend only.** Server actions + schema exist; **zero UI page**
-renders a list, and only the "add" action has a wired button
-(`AddToListButton`) — that button itself isn't rendered on any live
-page either.
+**Status: Verified complete.** Previously "Backend only, zero UI page" — now has a
+204-line real page (`src/app/my-list/page.tsx`) rendering the user's list via
+`getUserAnimeList`/`getUserMangaList`, plus `RemoveFromListButton`,
+`FavoriteToggleButton`, `ListStatusSelect` action components that didn't exist in
+the previous snapshot.
 
-- **Purpose:** Track watching/reading status, progress, score, favorite
-  flag per anime/manga title.
-- **User flow (intended):** Click "Add to list" on a title card → pick
-  status → view/manage at `/my-list` (route doesn't exist).
-- **Frontend files:** `src/components/actions/AddToListButton.tsx`
-  (not currently rendered by any page — it's used inside
-  `EpisodeTimeline`, which itself isn't rendered by any page).
-- **Backend files:** `src/lib/actions/animeList.ts`,
-  `src/lib/actions/mangaList.ts`.
-- **DB dependencies:** `user_anime_list`, `user_manga_list` tables
-  (unique index on `(clerkUserId, mediaId)`).
-- **Permissions:** requires Clerk sign-in; requires `DATABASE_URL`.
-- **Validation:** none beyond TypeScript's compile-time types — no
-  runtime schema check on the input object.
-- **Error states:** thrown Error caught by the calling client component,
-  shown as inline red text.
-- **Tests:** none.
-- **Remaining work:** `/my-list` page (read path — `getUserAnimeList`/
-  `getUserMangaList` exist but nothing calls them from UI), remove/
-  favorite/episode-progress UI (the actions `removeAnimeListEntry`,
-  `toggleAnimeFavorite`, `markEpisodeWatched` all exist server-side with
-  no UI trigger anywhere).
+- **DB dependency:** `user_anime_list`, `user_manga_list` tables.
+- **Known issue (latent, not active):** `getUserAnimeList(userId)`/
+  `getUserMangaList(userId)` still take a caller-supplied id rather than deriving it
+  from `auth()` internally — `my-list/page.tsx` correctly passes the signed-in
+  user's own id, so this isn't an active bug, but the function itself still has no
+  internal ownership check. See `SECURITY.md`.
 
-## Alerts / notifications
+## Alerts / notifications (`/alerts`)
 
-**Status: Backend only.** `RemindMeButton` exists but, like
-`AddToListButton`, is only referenced from a component
-(`EpisodeTimeline`) that no page renders.
+**Status: Verified complete.** Previously "Backend only" — now a real 66-line page
+rendering `AlertsPanel`/`NotificationsPanel`/`CreateAlertForm`, and the
+`/api/cron/notifications` route (previously entirely absent) now exists and writes
+to the `notifications` table.
 
-- **Purpose:** Per-title/person/studio alert subscriptions with a
-  frequency preference; a `notifications` table for delivered alerts.
-- **Frontend files:** `src/components/actions/RemindMeButton.tsx`.
-- **Backend files:** `src/lib/actions/alerts.ts`.
-- **DB dependencies:** `user_alerts` (unique on `clerkUserId, type,
-  targetId`), `notifications` (unique on `clerkUserId, dedupeKey`).
-- **Permissions:** Clerk sign-in + `DATABASE_URL`.
-- **Remaining work:** an `/alerts` page (nav.ts already declares the
-  route, and the header has a bell icon linking to it); the actual
-  alert-triggering mechanism (an `/api/cron/notifications` route is
-  declared in `vercel.json` but doesn't exist — nothing currently
-  creates rows in `notifications` from a real event).
+- **DB dependency:** `user_alerts`, `notifications`.
+- **Known issue:** the notification-generation logic's actual trigger conditions
+  (which events produce a notification) weren't independently re-derived line by
+  line this pass — read `src/app/api/cron/notifications/route.ts` directly before
+  relying on a specific claim about what triggers what.
 
 ## Follows (studio/person/tag/genre)
 
-**Status: Backend only, no UI at all.** No component in the repo calls
-`followTarget`/`unfollowTarget`/`getUserFollows`.
+**Status: Verified complete.** Previously "Backend only, no UI at all" — now has
+`FollowButton`/`UnfollowChip` components, used from `src/app/people/[id]/page.tsx`,
+`src/app/profile/page.tsx`, and `src/app/news/page.tsx`.
 
-- **Backend files:** `src/lib/actions/follows.ts`.
-- **DB dependencies:** `user_follows` table.
-- **Remaining work:** everything user-facing — this is schema +
-  server-action plumbing with zero UI.
+- **DB dependency:** `user_follows`.
+- **Known issue (latent, not active):** same caller-supplied-`userId` pattern as My
+  List, on `getUserFollows` — current callers pass their own id correctly.
 
-## Profile / Settings
+## Profile / Settings (`/profile`, `/settings`, `/settings/import`)
 
-**Status: Backend only, no UI at all.** `profile.ts`'s
-`getOrCreateProfile`/`updateProfile` are never called from any
-component.
+**Status: Verified complete.** Previously "Backend only, no UI at all" — now has a
+real `/profile` page and a `/settings` page backed by 8 separate preference-form
+components (`AppearanceForm`, `BriefPrefsForm`, `ContentPrefsForm`,
+`NotificationsForm`, `PrivacyForm`, `RegionForm`, `SpoilerForm`, `StreamingForm`),
+plus a CSV list-import wizard at `/settings/import` (`ImportWizard.tsx`, backed by
+`src/lib/actions/listImport.ts`'s `parseImportPreview`/`commitImport`, matching the
+`import_jobs` table's "preview before commit" design noted in `DATABASE.md`).
 
-- **Purpose:** Per-user preferences (timezone, region, language, accent
-  theme, color mode, genre filters, spoiler mode, brief mode/categories,
-  email digest opt-in, etc. — 20 columns in `profiles`).
-- **Backend files:** `src/lib/actions/profile.ts`.
-- **DB dependencies:** `profiles` table.
-- **Remaining work:** `/profile` and `/settings` pages (both declared
-  in `nav.ts`); note the accent/theme preference is currently only ever
-  stored in `localStorage` (`src/lib/theme.ts`) — the DB columns
-  `accentTheme`/`colorMode` on `profiles` are not yet synced with that
-  client-side state, so signing in on a second device wouldn't carry
-  the preference over even once the UI exists.
+- **DB dependency:** `profiles`, `import_jobs`.
+- **Known issue carried forward:** the accent/theme preference is still
+  `localStorage`-only (`src/lib/theme.ts`) — `profiles.accentTheme`/`colorMode`
+  columns exist but nothing syncs them yet, so preference still doesn't follow a
+  user across devices. Not independently re-verified this pass beyond confirming
+  `AppearanceForm.tsx` exists (its exact sync behavior wasn't re-read line by line).
+- **`NotificationsForm.tsx`** contains an honest in-UI disclosure that email
+  digests aren't sent yet (`resend` installed, not integrated) — matches the code
+  reality (re-verified: zero `resend` send call sites in `src/`).
 
-## News feed
+## Admin dashboard (`/admin`)
 
-**Status: Backend only** — `NewsFeedProvider` + `NewsCard`/`NewsList`
-components exist and are complete, but no page renders them (`/news`
-is declared in `nav.ts`, no `page.tsx` exists).
+**Status: Verified complete.** Previously "Planned / schema-only, zero code reads
+or writes any of it" — now fully real:
 
-- **Purpose:** Aggregated anime/manga/industry news from Google News
-  RSS across 8 categories, with reliability tagging and rumor
-  flagging.
-- **Frontend files:** `src/components/news/{NewsCard,NewsList}.tsx`.
-- **Backend files:** `src/lib/providers/news/{index,reliability}.ts`.
-- **External integrations:** Google News RSS (no key).
-- **Validation/edge cases:** empty category returns `[]` gracefully;
-  malformed feed items (missing title/link) are filtered out.
-- **Known issues:** `src/lib/dedup/clusterNews.ts` (multi-source
-  dedup) exists and looks complete but **is never called** — `NewsList`
-  renders raw, un-clustered articles, so the same story from 2+ outlets
-  would currently show as 2+ separate cards if a page ever consumed
-  `NewsFeedProvider.fetchAll()` directly.
-- **Remaining work:** `/news` page; decide whether to wire in
-  `clusterNews`.
+- **Auth:** gated in **both** `src/proxy.ts` (middleware, blocks before any
+  rendering) and `src/app/admin/layout.tsx` (defense-in-depth) — this dual-gate is
+  the direct fix for a real production auth-bypass bug (see `SECURITY.md`,
+  `DECISIONS.md`).
+- **Live provider health:** `src/lib/admin/providerHealth.ts` — makes a real,
+  cheap live AniList call plus reads every other provider's `.configured` flag;
+  not a stored/stale table read.
+- **Feature flags, announcement banner, test notifications, audit log:**
+  `src/lib/actions/admin.ts` — `toggleDataSource`, `toggleFeatureFlag`,
+  `updateAnnouncementBanner`, `sendTestNotification`, all independently re-checking
+  `requireAdmin()` and writing to `adminAuditLogs`.
+- **Known issue:** in this local environment, `ADMIN_USER_IDS` is unset, so `/admin`
+  is only reachable via a hand-set `profiles.isAdmin = true` row — not tested this
+  pass (would require a DB write, out of scope for a documentation-only re-sync).
 
-## Airing schedule / episode calendar
+## Airing schedule / Calendar (`/airing`, `/calendar`)
 
-**Status: Backend only.** `EpisodeTimeline` (home component) is the only
-consumer of `AniListProvider.getAiringBetween`; no dedicated
-`/airing` or `/calendar` page exists despite both being in `nav.ts`.
+**Status: Verified complete.** Previously "Backend only" (airing) / effectively
+unbuilt (calendar) — both now have real pages. `/calendar` (105 lines) additionally
+exposes `.ics` export via `GET /api/calendar/ics` (public route — works
+signed-out, showing only airing episodes; when signed in, also includes the
+user's own `calendar_reminders`).
 
-- **Frontend files:** `src/components/home/EpisodeTimeline.tsx`.
-- **Backend files:** `AniListProvider.getAiringBetween` (anilist
-  provider).
-- **Known issues:** has the `react-hooks/set-state-in-effect` lint
-  error (timezone/tick state).
-- **Remaining work:** `/airing` (week view) and `/calendar` (broader
-  calendar including manga volumes, music releases, birthdays — per
-  `CalendarEvent` type, which has no provider/query behind it at all
-  yet) pages.
+- **Frontend:** `AiringByDay.tsx`, `CalendarView.tsx`, `AddReminderForm.tsx`.
+- **Backend:** `AniListProvider.getAiringBetween`, `src/lib/actions/calendarReminders.ts`,
+  `src/lib/utils/calendarEvents.ts`.
+- **DB dependency:** `calendar_reminders`.
 
-## Trending / Discover / Seasonal browse
+## Seasonal / Discover browse (`/seasonal`, `/discover`)
 
-**Status: Backend only** (trending) / **Planned** (discover, seasonal
-have no dedicated code beyond the generic `AniListProvider.browse()`
-method and nav entries).
+**Status: Verified complete.** Previously "Backend only" (seasonal) / "Planned, no
+dedicated code" (discover) — `/seasonal` is 129 lines, `/discover` is 345 lines
+(the largest single page file found this pass), both calling
+`AniListProvider.browse()` with real filter UI.
 
-- **Frontend files:** `src/components/home/TrendingList.tsx`.
-- **Backend files:** `AniListProvider.browse()` (generic, supports
-  season/year/genre/format/status filters — the plumbing for a real
-  `/seasonal` and `/discover` page already exists in the provider, just
-  not wired to any route).
+## Anime / Manga detail pages (`/anime`, `/anime/[id]` + 5 tabs, `/manga`, `/manga/[id]` + 3 tabs)
 
-## Streaming availability
+**Status: Verified complete.** Previously entirely absent. `anime/[id]` has
+`characters`, `music`, `news`, `relations`, `staff`, `statistics` sub-routes;
+`manga/[id]` has `characters`, `news`, `relations`. All present in the 44-route
+build output.
 
-**Status: Verified complete as a utility, but unreachable** — pure
-function (`getStreamingAvailability`), no network call, correctly
-derives from AniList's own `externalLinks`. Used by `EpisodeTimeline`
-(itself unreachable). No known bugs in the logic itself.
+## People directory (`/people`, `/people/[id]`)
 
-## Music (OP/ED releases)
+**Status: Verified complete.** 100-line list page + detail page, using
+`FollowButton` for person-following (see "Follows" above).
 
-**Status: Mocked.** Explicitly and honestly labeled in code
-(`source: "mock"`) — 4 hand-picked real songs with search-based
-(not exact-video-ID) YouTube links. No live Spotify/MusicBrainz
-integration. No UI consumes `MusicProvider` at all in this snapshot (no
-`/music` page, and no component references it).
+## Music (`/music`, `anime/[id]/music`)
+
+**Status: Mocked, but now reachable** — status upgraded from the previous pass's
+"Mocked, no UI consumes it at all." `MusicProvider.getCuratedReleases()` is still
+honestly-labeled mock data (`source: "mock"`, `configured: false`, 4 real curated
+songs, YouTube-search links not guessed video IDs) — but it now has two real
+callers (`src/app/music/page.tsx`, `src/app/anime/[id]/music/page.tsx`), so the
+"never wired into any UI" part of the old finding no longer holds.
 
 ## MyAnimeList ranking data
 
-**Status: Planned / stub.** `MyAnimeListProvider`'s methods
-unconditionally return `null`, documented in-code as "intentionally
-unimplemented... requires a registered MAL API client." `configured`
-correctly reflects whether `MAL_CLIENT_ID` is set, but that flag
-currently has no functional effect.
+**Status: Planned / stub — unchanged.** `MyAnimeListProvider`'s methods still
+unconditionally return `null`, "intentionally unimplemented" per its own comment.
+Its `.configured` flag is now read by the admin health check, but that doesn't
+change the functional status.
 
 ## Jikan supplementary rankings
 
-**Status: Backend only, unreachable.** `JikanProvider.getRankingByMalId`
-is implemented and self-throttled correctly, but has zero callers
-anywhere in the codebase.
+**Status: Backend only, effectively unreachable — mostly unchanged.**
+`JikanProvider` now has exactly one caller (`src/lib/admin/providerHealth.ts`), but
+that caller only reads `.configured`, not `getRankingByMalId`'s actual data — so the
+real ranking data still has zero consumers. Slightly better than "zero callers
+anywhere," not yet "wired into a real feature." See `TASKS.md` T-104.
 
 ## YouTube trailers/PVs
 
-**Status: Backend only, unreachable.** `YouTubeProvider.searchTrailers`
-is implemented, key-gated, and has zero callers anywhere in the
-codebase.
+**Status: Verified complete as a utility, reachable.** `YouTubeProvider.searchTrailers`
+now has real callers via the Music pages (upgraded from "zero callers anywhere" in
+the previous pass) — still key-gated, `YOUTUBE_API_KEY` not set in this local
+environment, so it degrades to an empty result here.
+
+## Streaming availability
+
+**Status: Verified complete.** Pure function (`getStreamingAvailability`), no
+network call, correctly derives from AniList's own `externalLinks`. Used by
+`EpisodeTimeline` (now reachable via the live home page). No change from the
+previous pass's assessment beyond reachability.
 
 ## Theming (light/dark + 7 accent colors)
 
-**Status: Verified complete and reachable** — this is the one feature
-that is both fully implemented and live on every page (via `AppShell`'s
-header), since it doesn't depend on any route existing.
+**Status: Verified complete.** Unchanged from the previous pass except that the
+`react-hooks/set-state-in-effect` lint errors on `ThemeToggle`/`AccentPicker` are
+now fixed (targeted `eslint-disable-next-line` comments, re-verified by reading the
+current files — `npm run lint` is clean).
 
-- **Frontend files:** `ThemeToggle.tsx`, `AccentPicker.tsx`,
-  `globals.css`, `lib/theme.ts`, the inline script in `layout.tsx`.
-- **Persistence:** `localStorage` only (`anibrief-theme`,
-  `anibrief-accent`) — no server-side/DB persistence despite `profiles`
-  having `colorMode`/`accentTheme` columns (see Profile/Settings above).
-- **Known issues:** both `ThemeToggle` and `AccentPicker` have the
-  `react-hooks/set-state-in-effect` lint error on their initial-state
-  sync effect.
+## Cron-driven scheduled jobs (`/api/cron/*` — 7 routes)
 
-## Admin surface (audit log, feature flags, announcement banner, provider
-health, sync job tracking, trend snapshots)
+**Status: Verified complete.** Previously "Planned — none of the target routes
+exist." All 7 (`birthdays`, `daily-brief`, `notifications`, `refresh-airing`,
+`refresh-news`, `refresh-seasonal`, `trend-snapshot`) now exist under
+`src/app/api/cron/`, each wrapped in `src/lib/cron/runCronJob.ts`'s idempotency
+lock (backed by the `sync_jobs` table), matching every schedule in `vercel.json`
+exactly. Not independently verified against a live Vercel Cron trigger this pass
+(would require production access) — verified by reading the route source and
+confirming the shared lock pattern is used consistently.
 
-**Status: Planned / schema-only.** 6 tables exist
-(`admin_audit_logs`, `feature_flags`, `announcement_banner`,
-`data_sources`, `provider_health`, `sync_jobs`, `trend_snapshots` — 7
-actually) under `src/lib/db/schema/admin.ts`. **Zero code anywhere
-reads or writes any of them.** No admin route, no admin check, no
-`isAdmin`-gated UI.
+## PWA support
 
-## Cron-driven refresh jobs (airing, news, seasonal, birthdays, trend
-snapshot, daily brief, notifications)
+**Status: Verified complete.** `public/sw.js` (network-first for pages, cache-first
+for static assets, per its own header comment) + `ServiceWorkerRegister.tsx`
+(registers it, silently no-ops if unsupported) + `OfflineBanner.tsx` + a real
+`manifest.ts`. Not present at all in the previous pass's snapshot.
 
-**Status: Planned.** `vercel.json` declares schedules for all 7; **none
-of the target routes exist** (`src/app/api/cron/*` is entirely absent).
-This is the most visible "declared but not built" gap in the repo.
+## Rate limiting
+
+**Status: Broken / missing — unchanged.** Still genuinely absent everywhere. Not a
+regression; the previous pass's finding still holds exactly as stated. See
+`SECURITY.md` and `TASKS.md` T-102.
+
+## Runtime input validation (`zod`)
+
+**Status: Planned / gap — unchanged.** `zod` is still an installed, zero-usage
+dependency (re-verified: `grep -r 'from "zod"' src/` → no matches). See `TASKS.md`
+T-101.
+
+## Email digest sending (`resend`)
+
+**Status: Planned / gap — unchanged.** `resend` is still installed and unused,
+honestly disclosed in `NotificationsForm.tsx`'s own UI copy. The Daily Brief's
+"Email" share action uses a client-side `mailto:` link instead, which needs no key.

@@ -3,3 +3,4 @@ export * from "@/lib/db/schema/lists";
 export * from "@/lib/db/schema/alerts";
 export * from "@/lib/db/schema/briefing";
 export * from "@/lib/db/schema/admin";
+export * from "@/lib/db/schema/spotify";

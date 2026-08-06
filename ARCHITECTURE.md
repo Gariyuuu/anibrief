@@ -1,8 +1,35 @@
 # Architecture
 
+> Re-synced 2026-08-06 ~15:35 MST against the actual current git state (commit
+> `1d1eef9`, deployed and live at https://anibrief.vercel.app). This file's body was
+> largely already accurate as of the previous documentation pass (it was written
+> later in that session than the files that got the stale-snapshot treatment); this
+> note plus the "Production fixes" section below are the actual re-sync delta.
+
 AniBrief is a Next.js 16 App Router application — server-rendered by default, with Client
 Components only where interactivity genuinely requires them (forms, mutation buttons, the
 command palette, timezone-dependent rendering).
+
+## Production fixes (commit `1d1eef9`, since the initial release)
+
+Two real bugs were found and fixed after the initial build landed — both worth
+understanding architecturally, not just as changelog entries:
+
+1. **Admin auth bypass, closed at the middleware layer.** `/admin` originally
+   relied only on a layout-level `redirect()` for non-admins. In this Next.js
+   version, an in-flight sibling render could apparently still be serialized into
+   the response before that redirect took effect (an RSC-streaming timing quirk).
+   The fix moved the authoritative check into `src/proxy.ts` (middleware), which
+   runs before any rendering starts; the layout-level check remains as
+   defense-in-depth for client-side navigations. **Pattern to reuse:** any future
+   route that must never leak content to unauthorized requests should be gated in
+   middleware, not layout alone, in this Next.js version specifically.
+2. **RSC server/client prop-boundary crash.** `DailyBriefView` (Server Component)
+   was passing a render-prop *function* into `BriefModeToggle` (Client Component) —
+   functions can't cross that boundary. Fixed by passing only plain, serializable
+   data down. **Pattern to reuse:** never pass a function as a prop from a Server
+   Component into a Client Component; pass data and let the Client Component own
+   any rendering logic that needs a callback.
 
 ## Why this structure
 

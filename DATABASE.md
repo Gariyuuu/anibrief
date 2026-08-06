@@ -1,5 +1,13 @@
 # Database
 
+> Re-synced 2026-08-06 ~15:35 MST: per the `1d1eef9` commit message ("Provisioned
+> Neon Postgres via Vercel's integration and pushed schema"), the schema described
+> below is no longer just generated-but-unapplied — it has been pushed to a real,
+> live Neon database. This local environment's `.env.local` also now has a real
+> `DATABASE_URL` (confirmed by variable name only, value never read/printed).
+> Treat schema changes from here on as changes to a live database's shape, not a
+> green-field one — see `CLAUDE.md`'s "DO NOT CHANGE WITHOUT REVIEW."
+
 AniBrief uses **Neon** (serverless Postgres) via **Drizzle ORM**, accessed through Neon's HTTP
 driver (`@neondatabase/serverless`'s `neon()` + `drizzle-orm/neon-http`) — no persistent
 connection pool needed, which suits Vercel's serverless/edge functions well.

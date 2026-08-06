@@ -1,6 +1,9 @@
 # UI_SYSTEM.md
 
-> Snapshot: 2026-08-06 05:59:28 MST.
+> Re-synced 2026-08-06 ~15:35 MST against the actual current git state (commit
+> `1d1eef9`). The "Page structure" and "Error states" sections below were stale
+> (written against a pre-commit snapshot with no content pages) and have been
+> corrected; everything else in this file was already accurate.
 
 ## Layout system
 
@@ -26,11 +29,18 @@ which requires an exact match.
 
 ## Page structure
 
-**No content pages exist yet** (see `CLAUDE.md`/`PROJECT_STATE.md`).
-The only rendered "pages" are Clerk's `/sign-in` and `/sign-up`
-catch-all routes, each a centered single Clerk component
-(`<SignIn />`/`<SignUp />>`) inside a `min-h-screen` flex-center div —
-no custom styling applied beyond that wrapper.
+**All 34 `page.tsx` files now exist** (re-verified this pass via `find src/app -name
+page.tsx | wc -l` → 34, and `npm run build`'s 44-route output) — every route in
+`src/lib/nav.ts` resolves to a real page. Clerk's `/sign-in` and `/sign-up`
+catch-all routes are unchanged from the earlier description: a centered single
+Clerk component (`<SignIn />`/`<SignUp />`) inside a `min-h-screen` flex-center div,
+no custom styling beyond that wrapper. Content pages generally follow a
+Server-Component-fetches-then-renders-Client-Components pattern (e.g. the home
+page, `src/app/page.tsx`, calls `getTodaysBriefing()` then renders `HeroBrief`/
+`EpisodeTimeline`/`TrendingList`/`BirthdayStrip`) — see `ARCHITECTURE.md`'s "Data
+flow" section and its "Production fixes" note on the one place this pattern broke
+in production (a function prop crossing the server/client boundary in
+`DailyBriefView`, fixed in commit `1d1eef9`).
 
 ## Reusable components (`src/components/ui/`)
 
@@ -155,12 +165,16 @@ component — a minor inconsistency).
 
 ## Error states
 
-`ErrorState` primitive exists (2 reasons) but **is not currently used
-by any component** in this snapshot — server actions instead throw and
-let the calling client component render its own inline error text
-(e.g. `AddToListButton`'s `<p className="text-xs text-negative">`)
-rather than the shared `ErrorState` card. No global `error.tsx` App
-Router boundary exists.
+`ErrorState` primitive (2 reasons: `not_configured`/`fetch_failed`) is **now used**
+by `src/app/music/page.tsx`, `src/app/anime/[id]/music/page.tsx`, and
+`src/components/briefing/BriefModeToggle.tsx` (re-verified this pass — the
+previous pass found zero usages). Server actions still separately throw and let
+the calling client component render its own inline error text (e.g.
+`AddToListButton`'s `<p className="text-xs text-negative">`) for mutation
+failures — that's a different, still-valid pattern for a different case
+(write-path errors vs. read-path "this data source isn't configured/reachable"
+states). **A global `error.tsx` App Router boundary now exists**
+(`src/app/error.tsx`) — this is new since the previous pass, which found none.
 
 ## Accessibility
 

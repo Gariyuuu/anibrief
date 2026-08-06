@@ -1,138 +1,162 @@
 # HANDOFF.md — Start Here
 
-> Snapshot: 2026-08-06 05:59:28 MST. Read the "Concurrent modification"
-> note below before anything else — this repo may not be in the state
-> you'd expect from a normal, quiet handoff.
->
-> **UPDATE:** the concurrent activity did not stop after this snapshot
-> was locked — by ~06:15 MST the repo had grown from ~90 to ~176 files
-> and gained a home page, most nav routes, most cron routes, real
-> tests, and a real `.env.example`. See `PROJECT_STATE.md`'s "ADDENDUM"
-> section. **Your very first action should be re-verifying the current
-> file count and state before trusting anything below about what
-> is/isn't built.**
+> Re-synced 2026-08-06 ~15:35 MST. The previous version of this file described a
+> pre-commit, mid-flight snapshot ("no reachable pages," "concurrent modification
+> in progress") that is now stale — that work has since been committed
+> (`0a1de43`, `1d1eef9`) and the app is deployed. **A third commit, `91b23c4`,
+> landed and was pushed to `origin/main` during this very re-sync pass** — direct,
+> live proof that this repo's concurrent-development pattern (documented at length
+> in the prior stale-snapshot episode) can recur. This version reflects the actual
+> current, git-verified state as of `91b23c4`.
+
+## Read this first: the repo may already have moved again
+
+Near the end of the documentation pass that produced this version of `HANDOFF.md`,
+a **third wave of live, uncommitted concurrent development** was observed (on top
+of commit `91b23c4`, which itself landed mid-pass — see `SESSION_LOG.md`): an
+in-progress, uncommitted Spotify integration (`src/lib/db/schema/spotify.ts`, a
+generated migration, one new schema export) plus a small `AppShell.tsx` sidebar
+change. See `PROJECT_STATE.md`'s ADDENDUM and `TASKS.md` T-108 for the full,
+honest account. **Run `git status` and `git log --oneline -5` before trusting
+anything below** — this repo has now demonstrated the same "changes without
+warning mid-session" pattern three times.
 
 ## What is this project?
 
-**AniBrief** — a Next.js 16 app meant to be a daily briefing terminal
-for anime, manga, Japanese music, voice-actor news, episode tracking,
-and discovery, aggregating AniList, Jikan/MyAnimeList, Google News RSS,
-and YouTube data, with optional AI-generated summaries (Anthropic or
-OpenAI). Auth via Clerk, persistence via Neon Postgres + Drizzle ORM.
+**AniBrief** — a Next.js 16 app, a daily briefing terminal for anime, manga,
+Japanese music, voice-actor news, episode tracking, and discovery, aggregating
+AniList, Jikan/MyAnimeList, Google News RSS, and YouTube data, with optional
+AI-generated summaries (Anthropic or OpenAI). Auth via Clerk, persistence via Neon
+Postgres + Drizzle ORM. **Live at https://anibrief.vercel.app.**
 
 ## What should I read first?
 
 1. This file.
-2. `CLAUDE.md` — full operating manual (stack, commands, conventions,
-   env vars, "DO NOT CHANGE WITHOUT REVIEW," known issues).
-3. `PROJECT_STATE.md` — exact snapshot, including the concurrent-
-   modification episode.
+2. `CLAUDE.md` — full operating manual (stack, commands, conventions, env vars,
+   "DO NOT CHANGE WITHOUT REVIEW," known issues).
+3. `PROJECT_STATE.md` — exact current snapshot (git state, what works, what's next).
 4. `TASKS.md` — the current task queue.
 
 ## What is the current task?
 
-As of this handoff, there is **no in-progress feature task** — the most
-recent session was a documentation audit (this one), not feature work.
-The highest-priority *next* tasks (not yet started) are `TASKS.md`'s
-T-001 (fix 5 lint errors) and T-002 (build a home page so the
-already-built briefing/component layer becomes reachable). See
-`TASKS.md` for full detail on both, including exact files and
-acceptance criteria.
+**No task is in progress.** The most recent commit (`91b23c4`) fixed a sign-up
+CAPTCHA bug (an incomplete CSP), landing live during this documentation session
+from a separate process; before that, commit `1d1eef9` was a production
+bug-fix + deploy. The most recent session before this handoff was a documentation
+re-sync (this one), not feature work. `TASKS.md`'s "Next up" section lists real gaps
+found by code inspection (T-101 `zod` validation, T-102 rate limiting, T-103
+`userId`-ownership checks, T-107 CSP regression coverage) as candidates, but none
+are started or assigned priority beyond what's recorded there — pick based on what
+the next objective actually needs.
 
 ## What was the previous agent doing?
 
-This session's own work was purely documentation (writing these 17
-files). Separately — and this is important — **the repository was
-observed changing on its own, extensively, throughout this session**,
-apparently from a different, unidentified process: a Clerk auth layer,
-a full Neon/Drizzle database schema (18 tables), an AI summarization
-layer, a UI component library, and several server actions all appeared
-in the working tree between roughly 05:49 and 05:59 MST, without any
-tool call from this documentation session causing them. See
-`PROJECT_STATE.md`'s "Concurrent modification" section for the full,
-honest account, including that this audit chose *not* to revert any of
-it, on the theory that it looked like real, legitimate, in-progress
-work. **If you're picking this up and don't recognize that work as your
-own, investigate before assuming it's safe to build on top of it
-un-reviewed.**
+Two things happened, in order:
+1. **A large concurrent build** (observed live by an earlier documentation-audit
+   session, never attributed to a specific agent/process) added the entire app:
+   every route, the DB schema, server actions, the AI layer, the component library,
+   real tests, `.env.example`, PWA support — committed as `0a1de43` "Initial release:
+   AniBrief v0.1.1".
+2. **A follow-up session** found and fixed two real production bugs (an admin-page
+   auth bypass and a Daily Brief crash), retuned the cron schedule for Vercel's
+   Hobby plan, provisioned Neon, and deployed — committed as `1d1eef9`.
+3. **This session** re-verified all 17 documentation files against that actual
+   committed state (the prior documentation pass had locked its snapshot before
+   step 1 finished landing, so it described an app with "no home page," "no tests,"
+   "no cron routes" — all now false). No application code was changed by this
+   session.
+4. **A separate process, running concurrently with this very session**, found and
+   fixed a real sign-up bug (Clerk's CAPTCHA silently failing because the CSP
+   didn't allowlist Cloudflare Turnstile) — committed and pushed as `91b23c4`,
+   landing partway through this session's own work. That commit's diff shows it
+   also picked up this session's then-not-yet-git-saved edits to `CLAUDE.md`,
+   `PROJECT_STATE.md`, and `TASKS.md` (which were sitting in the working tree,
+   unstaged, when the other process committed) — this session never ran
+   `git commit`/`git push` itself. This is a live repeat of the exact
+   concurrent-development pattern the original stale-snapshot episode documented.
 
 ## What works right now?
 
 - `npm run typecheck` — clean.
-- `npm run build` — succeeded once (against an intermediate state).
-- The theming system (light/dark + 7 accents) — fully wired and live on
-  every route via the root layout, since it doesn't depend on any
-  content page existing.
-- The command palette (⌘K) — functional against `/api/search`, though
-  its results link to detail pages that don't exist yet.
-- A large amount of backend/component code (providers, DB schema, AI
-  layer, server actions, home/anime/news components) — complete-looking
-  and typechecks, but **unreachable by any route.**
+- `npm run lint` — clean, 0 errors, 0 warnings.
+- `npm run test` — 24/24 pass.
+- `npm run build` — succeeds, 44 routes.
+- **Every route declared in `src/lib/nav.ts` (15 items) has a real page** — home,
+  daily brief (+ archive), news, airing, seasonal, anime/manga (+ detail tab
+  routes), music, people, calendar, discover, my-list, alerts, profile, settings
+  (+ import).
+- All 7 `/api/cron/*` routes are real and idempotency-locked via `sync_jobs`.
+- The admin dashboard (`/admin`) is real: gated in both `proxy.ts` (middleware) and
+  `layout.tsx`, with live provider-health checks, feature-flag toggles, an
+  announcement-banner editor, a test-notification button, and an audit log.
+- Follows, Profile, and Settings have real UI now (previously backend-only).
+- News deduplication (`clusterNews`) is wired into `/news`.
+- Deployed and live at https://anibrief.vercel.app, with Clerk + a real,
+  schema-pushed Neon database.
+- Locally, `.env.local` has Clerk + `DATABASE_URL` configured (confirmed by variable
+  name only) — no AI key, no `YOUTUBE_API_KEY`, no `ADMIN_USER_IDS`, no `CRON_SECRET`
+  set in this environment specifically.
 
 ## What is broken?
 
-- `npm run lint` — 5 errors (`react-hooks/set-state-in-effect` in
-  `EpisodeTimeline.tsx`, `AccentPicker.tsx`, `CommandPalette.tsx` ×2,
-  `ThemeToggle.tsx`) + 3 unused-import warnings. See `TESTING.md`.
-- No home page (`src/app/page.tsx` doesn't exist) and none of
-  `src/lib/nav.ts`'s 15 declared routes have a `page.tsx` — the app is
-  not visitable as a product yet, only Clerk's sign-in/up screens work.
-- `vercel.json`'s 7 cron jobs target routes that don't exist.
+Nothing currently known. Both real bugs found in this project's life (admin auth
+bypass, Daily Brief RSC crash) are fixed and re-verified this pass by reading the
+actual current source, not just trusting the commit message.
 
 ## What should I do next?
 
-1. Re-verify the repo hasn't changed further since this handoff (fresh
-   `find src -type f` + `npm run typecheck && npm run lint`).
-2. Fix the lint errors (`TASKS.md` T-001) — quick, mechanical, unblocks
-   a clean gate.
-3. Build the home page (`TASKS.md` T-002) — the highest-leverage next
-   step, since almost everything it needs already exists.
+Depends entirely on the next objective — there's no forced next step. If you need a
+starting point, `TASKS.md`'s "Next up" section (T-101 `zod` validation, T-102 rate
+limiting, T-103 `userId`-ownership decision) are the most-flagged, longest-standing
+gaps, but none is urgent or blocking.
 
 ## Which files are most important?
 
-- `src/proxy.ts` + `src/app/layout.tsx` — the entire auth/shell
-  backbone every route depends on.
-- `src/lib/db/client.ts` + `src/lib/db/schema/*` — the persistence
-  contract every server action depends on.
-- `src/lib/nav.ts` — the single source of truth for the app's intended
-  information architecture; cross-reference against actual `page.tsx`
-  files to see what's missing.
-- `src/lib/briefing/{buildBriefing,getTodaysBriefing}.ts` — the biggest
-  ready-to-wire piece of unreached functionality.
+- `src/proxy.ts` — the entire auth/admin-gate backbone.
+- `src/lib/db/client.ts` + `src/lib/db/schema/*` — the persistence contract; the
+  schema has been pushed to a real, live database, so treat changes as needing a
+  real migration path, not a green-field `db:push`.
+- `src/lib/nav.ts` — the app's information architecture; every route now resolves.
+- `src/lib/cron/runCronJob.ts` — the shared pattern every `/api/cron/*` route uses.
+- `src/components/briefing/DailyBriefView.tsx` / `BriefModeToggle.tsx` — the exact
+  shape that crashed production once (a function prop crossing the RSC boundary);
+  don't reintroduce that pattern without checking `1d1eef9`'s diff first.
 
 ## Which areas are dangerous to modify?
 
-See `CLAUDE.md`'s "DO NOT CHANGE WITHOUT REVIEW" section in full.
-Headline: `src/proxy.ts`/Clerk config (auth boundary), the Drizzle
-schema (a migration has already been generated against it), `.env.local`
-(never print its contents), `vercel.json`'s cron schedules (keep in
-sync with whatever routes do/don't exist), the
-`isDatabaseConfigured()`/`getAIProvider()` graceful-degradation
-contracts.
+See `CLAUDE.md`'s "DO NOT CHANGE WITHOUT REVIEW" section in full. Headline:
+`src/proxy.ts` (auth boundary + admin gate), the Drizzle schema (pushed to a real
+live database now), `.env.local` (never print its contents — it now contains a real
+`DATABASE_URL`), `vercel.json`'s cron schedules (Hobby-plan-compatible, deliberately
+tuned), the `isDatabaseConfigured()`/`getAIProvider()` graceful-degradation
+contracts, and the `DailyBriefView`/`BriefModeToggle` server/client prop boundary.
 
 ## Which commands should I run first?
 
 ```bash
 cd /Users/gariyuu/Projects/anibrief
-npm run typecheck   # expect: clean
-npm run lint         # expect (as of this handoff): 5 errors, 3 warnings
-npm run test          # expect: 0 tests found
+git log --oneline -5     # confirm you're looking at the commits this file describes
+                          # (expect 91b23c4 latest; if there's a newer commit you
+                          # don't recognize, this repo has a track record of real
+                          # concurrent development landing without warning — don't
+                          # assume it's an accident, investigate before reverting)
+git status                # expect: clean, unless you're resuming mid-documentation-edit
+npm run typecheck          # expect: clean
+npm run lint                 # expect: 0 errors, 0 warnings
+npm run test                  # expect: 24 pass, 0 fail
+npm run build                  # expect: succeeds, ~44 routes
 ```
-Do **not** run `npm run db:push` against any database, and be cautious
-re-running `npm run build` given the concurrent-modification episode
-observed this session (see `DEPLOYMENT.md`'s "Known build failures"
-note) — if you do run it, take a file-timestamp inventory immediately
-before and after so you can tell what, if anything, changed as a
-result.
+Do **not** run `npm run db:push` against any database without explicit permission —
+`DATABASE_URL` in this environment points at a real, schema-pushed Neon database, not
+a disposable scratch one.
 
 ## How do I verify the app still works?
 
-There is no "still works" baseline for a running app yet, since no page
-renders anything a user could visit besides Clerk's sign-in/up screens.
-The closest available verification is: `npm run typecheck` stays clean,
-`npm run build` still succeeds, and (once you fix T-001) `npm run lint`
-stays clean. Once a home page exists, use `TESTING.md`'s manual
-smoke-test checklist.
+`npm run typecheck && npm run lint && npm run test && npm run build` all passing is
+the baseline this handoff verified. Beyond that, a real browser smoke test
+(`npm run dev`, or visiting https://anibrief.vercel.app) has **not** been run by any
+AI session yet — see `TESTING.md`'s manual checklist for what that would cover
+(sign-in, add-to-list, daily brief rendering, admin gating, etc.).
 
 ---
 
@@ -141,49 +165,53 @@ smoke-test checklist.
 Copy-paste this verbatim to start a new session on this project:
 
 ```
-Read CLAUDE.md, PROJECT_STATE.md, TASKS.md, and HANDOFF.md in this
-repository (/Users/gariyuu/Projects/anibrief) in full before doing
-anything else. This is AniBrief, a Next.js 16 daily-briefing app for
-anime/manga/Japanese music/news, with Clerk auth and a Neon+Drizzle
-database layer.
+Read CLAUDE.md, PROJECT_STATE.md, TASKS.md, and HANDOFF.md in this repository
+(/Users/gariyuu/Projects/anibrief) in full before doing anything else. This is
+AniBrief, a Next.js 16 daily-briefing app for anime/manga/Japanese music/news, with
+Clerk auth and a Neon+Drizzle database layer. It is deployed and live at
+https://anibrief.vercel.app.
 
-Important context before you start: this repo has no git history of
-its own (see PROJECT_STATE.md), and the last documentation-audit
-session observed the repository changing extensively on its own,
-apparently from a separate concurrent process, throughout that entire
-session. Do not assume the repo is in a quiet, settled state just
-because no one told you otherwise.
+Important context before you start: this repo has real git history now (3 commits on
+`main` as of this note — check `git log --oneline` for the actual current count,
+since a 4th could exist by the time you read this) and a demonstrated, recurring
+pattern of **real concurrent development landing without warning** — twice now, once
+during the original documentation audit and once during the re-sync that produced
+this file, a separate process committed and pushed real work mid-session. Don't
+assume the repo is quiet just because no one told you otherwise; check `git status`
+first, and if you find a commit you don't recognize, investigate before assuming it's
+safe to build on top of or, worse, trying to revert it. An earlier documentation pass
+in this repo's history was written against a stale, mid-flight snapshot taken before
+a large concurrent build had finished landing — if you find any documentation file
+describing "no home page," "no tests," "no cron routes," or "not deployed," that
+content is from that stale pass and has already been corrected once (2026-08-06
+~15:35 MST re-sync) — but re-verify anyway, don't just trust this note.
 
 After reading those files:
-1. Take a fresh file inventory of src/ (there's no `git status` to lean
-   on) and compare it against CLAUDE.md's "Repository structure" and
-   PROJECT_STATE.md's snapshot — flag any difference you find, however
-   small.
-2. Re-run `npm run typecheck` and `npm run lint` and confirm they match
-   what CLAUDE.md/TESTING.md/PROJECT_STATE.md report (typecheck clean;
-   lint currently 5 errors + 3 warnings, all in files listed in
-   TASKS.md T-001).
-3. Read whichever of ARCHITECTURE.md / FEATURES.md / API_REFERENCE.md /
-   DATABASE.md / SECURITY.md / UI_SYSTEM.md / DECISIONS.md is relevant
-   to what you're about to do.
-4. Summarize your understanding of the current state back to me in a
-   few sentences before making any changes, and explicitly flag
-   anything in the documentation that looks stale or contradicts what
-   you find in the actual code.
-5. Continue from TASKS.md's "Next up" section (T-001, then T-002) —
-   do not redo the documentation audit itself, and do not assume any
-   feature is unbuilt without checking FEATURES.md's status
-   classification and the actual code first (a striking amount of this
-   repo's backend/component layer already exists but is simply
-   unreachable by any route).
-6. Preserve the existing architecture (Clerk for auth, Neon+Drizzle for
-   persistence, the provider-never-throws / server-action-throws
-   pattern, the isDatabaseConfigured()/getAIProvider() graceful-
-   degradation contracts) unless you find a strong, specific reason to
-   change it — and if you do change something architectural, record it
-   in DECISIONS.md.
-7. After completing any meaningful work, update PROJECT_STATE.md,
-   TASKS.md, and append to SESSION_LOG.md (append — never overwrite
-   prior entries), plus whichever other documentation file(s) your
-   change affects.
+1. Run `git log --oneline -10` and `git status` — confirm the repo matches what
+   PROJECT_STATE.md describes (branch, latest commit, clean/dirty tree). Flag any
+   difference.
+2. Re-run `npm run typecheck && npm run lint && npm run test && npm run build` and
+   confirm they match what CLAUDE.md/TESTING.md/PROJECT_STATE.md report (all should
+   pass clean; build should produce ~44 routes).
+3. Read whichever of ARCHITECTURE.md / FEATURES.md / API_REFERENCE.md / DATABASE.md /
+   SECURITY.md / UI_SYSTEM.md / DECISIONS.md is relevant to what you're about to do.
+4. Summarize your understanding of the current state back to me in a few sentences
+   before making any changes, and explicitly flag anything in the documentation that
+   looks stale or contradicts what you find in the actual code.
+5. Continue from TASKS.md's "Next up" section, or from whatever the user actually
+   asks for — do not assume any feature is unbuilt without checking FEATURES.md's
+   status classification and the actual code first (this repo has a track record of
+   documentation lagging behind fast-moving actual code).
+6. Preserve the existing architecture (Clerk for auth, Neon+Drizzle for persistence,
+   the provider-never-throws / server-action-throws pattern, the
+   isDatabaseConfigured()/getAIProvider() graceful-degradation contracts, the
+   runCronJob() idempotency-lock pattern) unless you find a strong, specific reason
+   to change it — and if you do change something architectural, record it in
+   DECISIONS.md.
+7. Remember `DATABASE_URL` in this environment points at a real, schema-pushed Neon
+   database (not a disposable scratch one) — never run `db:push`/destructive
+   operations against it without explicit permission.
+8. After completing any meaningful work, update PROJECT_STATE.md, TASKS.md, and
+   append to SESSION_LOG.md (append — never overwrite prior entries), plus whichever
+   other documentation file(s) your change affects.
 ```

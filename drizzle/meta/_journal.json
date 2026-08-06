@@ -8,6 +8,13 @@
       "when": 1786020701908,
       "tag": "0000_silly_captain_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786056650430,
+      "tag": "0001_brief_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

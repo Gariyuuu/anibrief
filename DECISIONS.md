@@ -3,7 +3,12 @@
 > Reasoning is labeled **Verified** when it is directly evidenced by an
 > in-repo comment or file (with a pointer) and **Inferred** when
 > reconstructed from code shape/behavior with no written justification
-> found. Never fabricated. Snapshot: 2026-08-06 05:59:28 MST.
+> found. Never fabricated. Original snapshot: 2026-08-06 05:59:28 MST,
+> DEC-001 through DEC-010 below. **Re-synced 2026-08-06 ~15:35 MST** against the
+> actual current git state (commit `1d1eef9`) — DEC-001 through DEC-010 were
+> re-checked and still hold as stated (the code shapes they describe are unchanged);
+> DEC-011 through DEC-013 are new, recording decisions made in the commits that
+> landed since the original snapshot.
 
 ### DEC-001 — Clerk for authentication, not a hand-rolled auth system
 
@@ -164,15 +169,76 @@ one source of truth
   `package.json`/`package-lock.json`); reasoning for keeping them
   installed unconfirmed.
 
-### DEC-010 — App Router file conventions used for all generated images
-(icons, OG image, PWA icons) instead of static files in `public/`
+### DEC-011 — Auth gates that must never leak content go in middleware, not just a layout `redirect()`
+
+- **Decision:** `/admin`'s authorization check now lives in **both**
+  `src/proxy.ts` (middleware, authoritative) and `src/app/admin/layout.tsx`
+  (defense-in-depth for client-side navigation) — not layout alone.
+- **Reasoning:** **Verified** — a real production bug: a signed-out request could
+  receive the full rendered `/admin` dashboard content with a `200` before the
+  layout's `redirect()` took effect, due to an RSC-streaming timing quirk in this
+  Next.js version (confirmed in the `src/proxy.ts` code comment, which describes
+  inspecting a raw response body that still contained admin content despite the
+  redirect firing). Fixed in commit `1d1eef9`.
+- **Verification:** Verified (in-repo comment + the fix is present in the current
+  `src/proxy.ts`, re-read this pass).
+- **Consequence / pattern to reuse:** any future route where leaking content to an
+  unauthorized signed-out request would be a real problem (not just a UX
+  inconvenience) should be gated in `proxy.ts`, not relying on a layout-level
+  `redirect()` alone, in this Next.js version specifically.
+
+### DEC-012 — Never pass a function as a prop across the Server-Component → Client-Component boundary
+
+- **Decision:** `src/components/briefing/DailyBriefView.tsx` (Server Component) now
+  passes only plain, serializable data into `BriefModeToggle` (Client Component) —
+  no function/render-prop.
+- **Reasoning:** **Verified** — a real production bug: the Daily Brief page
+  crashed because a Server Component was passing a render-prop function into a
+  Client Component, and functions aren't serializable across that RSC boundary.
+  Fixed in commit `1d1eef9` by restructuring the data flow. Re-verified this pass
+  by reading the current `DailyBriefView.tsx` — no function props remain in that
+  boundary.
+- **Verification:** Verified (direct code read, current file).
+- **Consequence / pattern to reuse:** treat any Server-Component-to-Client-Component
+  prop as needing to survive JSON-like serialization; pass data, and let the Client
+  Component own whichever callback/rendering logic needs a live function.
+
+### DEC-013 — Lint errors fixed with targeted disables, not restructuring
+
+- **Decision:** The 5 `react-hooks/set-state-in-effect` errors flagged in the
+  earlier documentation pass (`ThemeToggle.tsx`, `AccentPicker.tsx`,
+  `CommandPalette.tsx` ×2, `EpisodeTimeline.tsx`) were resolved with targeted
+  `eslint-disable-next-line react-hooks/set-state-in-effect` comments on each
+  synchronous `setState` call inside a mount-time `useEffect`, rather than
+  restructuring to a lazy `useState` initializer or a ref-based pattern (both of
+  which the earlier pass's `TASKS.md` T-001 had suggested as options).
+- **Reasoning:** **Inferred** — no comment explains the choice of "disable" over
+  "restructure." A plausible read: these specific effects read a DOM/`localStorage`
+  value that the no-flash inline script in `layout.tsx` has already applied to
+  `<html>` before paint, so the state sync is intentionally a one-time,
+  already-correct read rather than a genuine effect misuse — the lint rule's
+  general concern (an effect that could just be inlined into render) may not fully
+  apply to this specific "sync React state to what an inline pre-paint script
+  already did to the DOM" pattern. Not confirmed by any in-repo comment.
+- **Verification:** Verified that this is the actual current fix (direct code read
+  of `ThemeToggle.tsx`, confirmed via this pass); `npm run lint` is clean (0 errors,
+  0 warnings), confirming the fix is effective. The *reasoning* for choosing this
+  approach over restructuring is inferred, not confirmed.
+
+### DEC-010 — App Router file conventions used for all generated images (icons, OG image, PWA icons) instead of static files in `public/`
 
 - **Decision:** `icon.tsx`, `apple-icon.tsx`, `opengraph-image.tsx`, and
   `pwa-icon/{192,512}/route.tsx` all use `next/og`'s `ImageResponse` to
   render JSX-as-PNG at request time, rather than shipping static image
-  files. `public/` is entirely empty.
+  files.
 - **Reasoning:** **Inferred** — likely to keep the brand mark defined
   once (as SVG-shaped JSX matching `components/brand/Mark.tsx`'s
   geometry) rather than exporting and maintaining multiple static PNG
   sizes by hand. Not confirmed by any comment.
 - **Verification:** Verified as the current state; reasoning inferred.
+  **Re-checked 2026-08-06 ~15:35 MST:** `public/` is **no longer entirely empty**
+  as the original snapshot found — `public/sw.js` (the PWA service worker, new
+  since that snapshot) now lives there. The core decision (generated images via
+  `next/og` rather than static PNGs) is unchanged; only the "public/ is empty"
+  side-claim needed correcting.
+

@@ -24,9 +24,14 @@ export function AppShell({ children, banner }: { children: ReactNode; banner?: R
         <div className="mt-6 flex-1 overflow-y-auto">
           <NavLinks />
         </div>
-        <p className="mt-4 border-t border-border pt-3 text-[11px] leading-snug text-muted">
-          Independent discovery &amp; tracking service. Not affiliated with AniList, MyAnimeList, or Crunchyroll.
-        </p>
+        <div className="mt-4 border-t border-border pt-3">
+          <Link href="/whats-new" className="text-[11px] font-medium text-muted hover:text-accent">
+            What&apos;s New / Patch notes
+          </Link>
+          <p className="mt-1.5 text-[11px] leading-snug text-muted">
+            Independent discovery &amp; tracking service. Not affiliated with AniList, MyAnimeList, or Crunchyroll.
+          </p>
+        </div>
       </aside>
 
       {mobileOpen && (
