@@ -15,6 +15,8 @@ import { BriefPrefsForm } from "@/components/settings/BriefPrefsForm";
 import { RegionForm } from "@/components/settings/RegionForm";
 import { NotificationsForm } from "@/components/settings/NotificationsForm";
 import { PrivacyForm } from "@/components/settings/PrivacyForm";
+import { getSpotifyConnectionStatus } from "@/lib/actions/spotify";
+import { SpotifyConnectionCard } from "@/components/music/SpotifyConnectionCard";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -33,6 +35,7 @@ function Section({ title, description, children }: { title: string; description?
 export default async function SettingsPage() {
   const { userId } = await auth();
   const profile = userId ? await getOrCreateProfile(userId) : null;
+  const spotifyStatus = userId ? await getSpotifyConnectionStatus(userId) : { connected: false, spotifyUserId: null };
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -110,6 +113,10 @@ export default async function SettingsPage() {
               <UserProfile routing="hash" />
             </div>
           </section>
+
+          <Section title="Spotify" description="Connect your Spotify account to save selections from the Music page as a real playlist.">
+            <SpotifyConnectionCard status={spotifyStatus} />
+          </Section>
 
           <Section
             title="Privacy"

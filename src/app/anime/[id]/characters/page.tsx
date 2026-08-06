@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { getAnimeDetail } from "@/lib/providers/anilist/getAnimeDetail";
 import { AnimeDetailHeader } from "@/components/anime/AnimeDetailHeader";
 import { Card } from "@/components/ui/Card";
@@ -25,7 +26,7 @@ export default async function AnimeCharactersPage({ params }: { params: Promise<
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {edges.map((edge) => (
             <Card key={edge.node.id} className="flex items-center justify-between gap-3 p-3">
-              <div className="flex min-w-0 items-center gap-2.5">
+              <Link href={`/characters/${encodeURIComponent(`anilist:${edge.node.id}`)}`} className="flex min-w-0 items-center gap-2.5 hover:text-accent">
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
                   {edge.node.image?.large && <Image src={edge.node.image.large} alt="" fill sizes="48px" className="object-cover" />}
                 </div>
@@ -33,9 +34,12 @@ export default async function AnimeCharactersPage({ params }: { params: Promise<
                   <p className="truncate text-sm font-medium">{edge.node.name.full}</p>
                   <p className="text-xs text-muted capitalize">{edge.role.toLowerCase()}</p>
                 </div>
-              </div>
+              </Link>
               {edge.voiceActors[0] && (
-                <div className="flex shrink-0 items-center gap-2.5 text-right">
+                <Link
+                  href={`/people/${encodeURIComponent(`anilist:${edge.voiceActors[0].id}`)}`}
+                  className="flex shrink-0 items-center gap-2.5 text-right hover:text-accent"
+                >
                   <div>
                     <p className="text-sm">{edge.voiceActors[0].name.full}</p>
                     <p className="text-xs text-muted">Japanese</p>
@@ -43,7 +47,7 @@ export default async function AnimeCharactersPage({ params }: { params: Promise<
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
                     {edge.voiceActors[0].image?.large && <Image src={edge.voiceActors[0].image.large} alt="" fill sizes="48px" className="object-cover" />}
                   </div>
-                </div>
+                </Link>
               )}
             </Card>
           ))}

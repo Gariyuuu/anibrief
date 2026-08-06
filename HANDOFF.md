@@ -11,15 +11,17 @@
 
 ## Read this first: the repo may already have moved again
 
-Near the end of the documentation pass that produced this version of `HANDOFF.md`,
-a **third wave of live, uncommitted concurrent development** was observed (on top
-of commit `91b23c4`, which itself landed mid-pass — see `SESSION_LOG.md`): an
-in-progress, uncommitted Spotify integration (`src/lib/db/schema/spotify.ts`, a
-generated migration, one new schema export) plus a small `AppShell.tsx` sidebar
-change. See `PROJECT_STATE.md`'s ADDENDUM and `TASKS.md` T-108 for the full,
+During the documentation pass that produced this version of `HANDOFF.md`, **four
+commits landed on `main` in roughly 20 minutes**, two of them (`91b23c4`,
+`d296f93`) live, mid-pass, from a separate process — each sweeping up this
+session's then-unsaved documentation edits into itself along with its own real
+application changes (a CSP/CAPTCHA fix, then a Spotify OAuth schema + a sidebar
+nav link). **The actual latest commit is `d296f93`** — treat any "latest commit"
+claim elsewhere in this file that says `91b23c4` as one step behind. See
+`PROJECT_STATE.md`'s SECOND ADDENDUM and `SESSION_LOG.md`'s addenda for the full,
 honest account. **Run `git status` and `git log --oneline -5` before trusting
-anything below** — this repo has now demonstrated the same "changes without
-warning mid-session" pattern three times.
+anything below** — this repo has now demonstrated "changes without warning
+mid-session" four times today.
 
 ## What is this project?
 

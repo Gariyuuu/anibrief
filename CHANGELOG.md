@@ -3,6 +3,36 @@
 All notable changes to AniBrief are documented here. This file also powers the in-app
 "What's New" page (`/whats-new`).
 
+## 0.2.0 — Spotify sync, live music charts, and a full People & Characters directory
+
+### Added
+
+- **Patch notes are now linked from the sidebar** ("What's New / Patch notes", bottom of the
+  left nav on every page) — previously `/whats-new` existed but wasn't linked from anywhere.
+- **Real Spotify integration.** Connect your own Spotify account (Settings → Connected
+  Accounts, or from the Music page) via a real OAuth flow, then select tracks on the Music page
+  and save them as an actual playlist on your Spotify account — not a link-out, a real API call
+  that creates the playlist and adds the tracks. Requires `SPOTIFY_CLIENT_ID`/
+  `SPOTIFY_CLIENT_SECRET` (see `ENVIRONMENT_VARIABLES.md`); shows an honest "not configured"
+  state until then.
+- **Live "New this season" and "Trending" music feeds** on the Music page — real YouTube
+  searches (Music category, sorted by upload date or view count) plus, once Spotify is
+  configured, the live tracklist of a real, well-followed curator playlist (e.g. "Anime
+  Openings & Endings"), clearly labeled as coming from that playlist rather than an
+  AniBrief-computed chart. The old hand-curated OP/ED credits stay as a fallback section.
+- **Multi-source playlist builder**: check tracks across the New/Trending/curated sections
+  (works across both YouTube and Spotify results), then either open a real YouTube multi-video
+  queue, get a combined Spotify search link, or (if connected) save straight to Spotify.
+- **People section is now a full, paginated, searchable directory** covering both AniList staff
+  (voice actors, directors, authors, composers) and, new, **characters** — tabs for People and
+  Characters, search or browse-all-by-popularity with real pagination, and a new character
+  detail page (`/characters/[id]`) showing bio, favourites, birthday (or "Unknown" — AniList
+  rarely has real birth dates for fictional characters, and this never guesses one), and every
+  anime/manga they appear in. Character links are wired in from birthday strips and every
+  anime/manga's Characters tab. You can now follow characters, not just people.
+- Global search (`⌘K` and `/api/search`) now also returns matching people and characters
+  alongside anime/manga.
+
 ## 0.1.2 — Sign-up CAPTCHA fix
 
 ### Fixed

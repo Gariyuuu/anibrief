@@ -34,13 +34,13 @@ export function BirthdayStrip({ people, characters }: { people: NormalizedPerson
           </Link>
         ))}
         {characters.map((c) => (
-          <a key={c.id} href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex w-16 shrink-0 flex-col items-center gap-1 text-center">
+          <Link key={c.id} href={`/characters/${encodeURIComponent(c.id)}`} className="flex w-16 shrink-0 flex-col items-center gap-1 text-center">
             <div className="relative h-14 w-14 overflow-hidden rounded-full border border-dashed border-border">
               {c.image ? <Image src={c.image} alt="" fill sizes="56px" className="object-cover" /> : <div className="h-full w-full bg-border" />}
             </div>
             <p className="line-clamp-2 text-[11px] leading-tight">{c.name}</p>
             <Badge tone="neutral" className="text-[9px]">Character</Badge>
-          </a>
+          </Link>
         ))}
       </div>
     </Card>

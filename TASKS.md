@@ -96,24 +96,22 @@ task list — treat each as a fresh candidate to prioritize, not a stale carryov
 - **Blockers:** none — this is an application-file edit, intentionally **not** made
   by this documentation-only re-sync pass.
 
-### T-108 — Finish (or evaluate) the in-progress, uncommitted Spotify integration
-- **Description:** Near the end of this documentation pass, uncommitted changes
-  appeared in the working tree: `src/lib/db/schema/spotify.ts` (a
-  `userSpotifyConnections` OAuth-token table), a generated-but-unapplied migration
-  (`drizzle/0001_brief_spencer_smythe.sql`), one new export in
-  `src/lib/db/schema/index.ts`, and a small unrelated `AppShell.tsx` sidebar change
-  (a "What's New" link). No provider file, no UI, no `package.json` dependency
-  exists yet for Spotify — this is very early, schema-first work, not attributable
-  to this documentation pass (which only edits `.md` files). See
-  `PROJECT_STATE.md`'s ADDENDUM.
-- **Status:** In progress (not by this session), uncommitted as of this pass's end.
-- **Priority:** Not this pass's to set — flagging only.
-- **Relevant files:** `src/lib/db/schema/spotify.ts`, `drizzle/0001_*`,
-  `src/lib/db/schema/index.ts`, `src/components/layout/AppShell.tsx`.
-- **Blockers:** none noted; simply incomplete as of this pass's end.
-- **Note:** whoever picks this up next should run `git status`/`git diff` first —
-  this may already be finished, committed, or further along by the time you read
-  this.
+### T-108 — Build the actual Spotify provider + UI on top of the new schema
+- **Description:** Commit `d296f93` (landed live during this documentation pass,
+  after an earlier uncommitted-work sighting — see `PROJECT_STATE.md`'s SECOND
+  ADDENDUM) added `src/lib/db/schema/spotify.ts`'s `userSpotifyConnections` table
+  and pushed it to the live database. No `src/lib/providers/spotify/` provider, no
+  OAuth flow, no UI consumer exists yet — this is schema-only, same stage
+  `MyAnimeListProvider` has been at since the initial release.
+- **Status:** Schema committed and live; provider/OAuth/UI not started.
+- **Priority:** Not this pass's to set — flagging only, since it wasn't started or
+  scoped by this documentation session.
+- **Relevant files:** `src/lib/db/schema/spotify.ts`, `drizzle/0001_*`.
+- **Blockers:** needs a registered Spotify OAuth app (client id/secret), not
+  present in this local environment's `.env.local` (re-verify before assuming).
+- **Note:** whoever picks this up next should run `git log`/`git status` first —
+  this repo has shipped 4 commits in roughly 20 minutes today; it may have moved
+  further by the time you read this.
 
 ### T-107 — Add a CSP/security-header regression check
 - **Description:** The just-fixed sign-up CAPTCHA bug (commit `91b23c4`) shipped

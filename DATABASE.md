@@ -6,7 +6,14 @@
 > live Neon database. This local environment's `.env.local` also now has a real
 > `DATABASE_URL` (confirmed by variable name only, value never read/printed).
 > Treat schema changes from here on as changes to a live database's shape, not a
-> green-field one — see `CLAUDE.md`'s "DO NOT CHANGE WITHOUT REVIEW."
+> green-field one — see `CLAUDE.md`'s "DO NOT CHANGE WITHOUT REVIEW." **A 19th
+> table, `user_spotify_connections`, was added and pushed live during this
+> documentation pass** (commit `d296f93`, not made by this pass — see
+> `PROJECT_STATE.md`'s SECOND ADDENDUM): OAuth token storage
+> (`clerkUserId`/`spotifyUserId`/`accessToken`/`refreshToken`/`expiresAt`/`scope`)
+> for a Spotify integration that has a schema but, as of this pass's end, no
+> provider or UI yet. The table list below (18 tables) was not re-numbered to
+> include it — treat it as a 19th, freshly-added table alongside the 18 described.
 
 AniBrief uses **Neon** (serverless Postgres) via **Drizzle ORM**, accessed through Neon's HTTP
 driver (`@neondatabase/serverless`'s `neon()` + `drizzle-orm/neon-http`) — no persistent

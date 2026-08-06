@@ -19,9 +19,10 @@ import type { NormalizedMedia } from "@/lib/types/media";
 
 export const metadata: Metadata = { title: "Profile" };
 
-const FOLLOW_GROUPS: { type: "studio" | "person" | "tag" | "genre"; label: string }[] = [
+const FOLLOW_GROUPS: { type: "studio" | "person" | "character" | "tag" | "genre"; label: string }[] = [
   { type: "studio", label: "Studios" },
   { type: "person", label: "People" },
+  { type: "character", label: "Characters" },
   { type: "tag", label: "Tags" },
   { type: "genre", label: "Genres" },
 ];

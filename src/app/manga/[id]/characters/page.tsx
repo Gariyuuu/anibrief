@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { getAnimeDetail } from "@/lib/providers/anilist/getAnimeDetail";
 import { AnimeDetailHeader } from "@/components/anime/AnimeDetailHeader";
 import { Card } from "@/components/ui/Card";
@@ -25,13 +26,15 @@ export default async function MangaCharactersPage({ params }: { params: Promise<
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {edges.map((edge) => (
             <Card key={edge.node.id} className="flex items-center gap-2.5 p-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
-                {edge.node.image?.large && <Image src={edge.node.image.large} alt="" fill sizes="48px" className="object-cover" />}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{edge.node.name.full}</p>
-                <p className="text-xs text-muted capitalize">{edge.role.toLowerCase()}</p>
-              </div>
+              <Link href={`/characters/${encodeURIComponent(`anilist:${edge.node.id}`)}`} className="flex min-w-0 items-center gap-2.5 hover:text-accent">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
+                  {edge.node.image?.large && <Image src={edge.node.image.large} alt="" fill sizes="48px" className="object-cover" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{edge.node.name.full}</p>
+                  <p className="text-xs text-muted capitalize">{edge.role.toLowerCase()}</p>
+                </div>
+              </Link>
             </Card>
           ))}
         </div>

@@ -61,4 +61,61 @@ export const YouTubeProvider = {
       return [];
     }
   },
+
+  /**
+   * Real music-video search scoped to YouTube's Music category
+   * (`videoCategoryId=10`), used for the Music page's "New this season" and
+   * "Trending" feeds. `order` picks between newest-first (`date`) and
+   * most-viewed (`viewCount`) — the same real ordering options YouTube's
+   * search endpoint itself exposes, not a client-side re-sort.
+   */
+  async searchAnimeMusic({
+    query,
+    order,
+    maxResults = 12,
+  }: {
+    query: string;
+    order: "date" | "viewCount";
+    maxResults?: number;
+  }): Promise<YouTubeVideo[]> {
+    if (!this.configured) {
+      logger.info("YouTubeProvider.searchAnimeMusic skipped: YOUTUBE_API_KEY not set");
+      return [];
+    }
+
+    try {
+      const url = new URL("https://www.googleapis.com/youtube/v3/search");
+      url.searchParams.set("part", "snippet");
+      url.searchParams.set("q", query);
+      url.searchParams.set("type", "video");
+      url.searchParams.set("videoCategoryId", "10"); // Music
+      url.searchParams.set("order", order);
+      url.searchParams.set("maxResults", String(maxResults));
+      url.searchParams.set("key", process.env.YOUTUBE_API_KEY!);
+
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) throw new Error(`YouTube API request failed: ${res.status}`);
+      const json = await res.json();
+
+      return (json.items ?? []).map(
+        (item: {
+          id: { videoId: string };
+          snippet: { title: string; channelTitle: string; publishedAt: string; thumbnails: { high: { url: string } } };
+        }) => ({
+          videoId: item.id.videoId,
+          title: item.snippet.title,
+          channelName: item.snippet.channelTitle,
+          publishedAt: item.snippet.publishedAt,
+          thumbnail: item.snippet.thumbnails.high.url,
+          videoType: "music_video" as const,
+          officialConfidence: "unverified" as const,
+        })
+      );
+    } catch (error) {
+      logger.error("YouTubeProvider.searchAnimeMusic failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return [];
+    }
+  },
 };

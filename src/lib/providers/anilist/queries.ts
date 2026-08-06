@@ -336,6 +336,10 @@ export const STAFF_BY_ID_QUERY = /* GraphQL */ `
 export const SEARCH_STAFF_QUERY = /* GraphQL */ `
   query SearchStaff($search: String, $page: Int, $perPage: Int) {
     Page(page: $page, perPage: $perPage) {
+      pageInfo {
+        hasNextPage
+        total
+      }
       staff(search: $search, sort: SEARCH_MATCH) {
         id
         name {
@@ -361,6 +365,10 @@ export const SEARCH_STAFF_QUERY = /* GraphQL */ `
 export const POPULAR_STAFF_QUERY = /* GraphQL */ `
   query PopularStaff($page: Int, $perPage: Int) {
     Page(page: $page, perPage: $perPage) {
+      pageInfo {
+        hasNextPage
+        total
+      }
       staff(sort: FAVOURITES_DESC) {
         id
         name {
@@ -379,6 +387,90 @@ export const POPULAR_STAFF_QUERY = /* GraphQL */ `
         homeTown
         siteUrl
         description(asHtml: false)
+      }
+    }
+  }
+`;
+
+/**
+ * Character equivalents of the staff search/detail/popularity queries above —
+ * same `Page{characters(...)}`/`Character(id:...)` shapes, verified live
+ * against AniList's public schema. `dateOfBirth` is requested honestly even
+ * though most characters have it unset (fictional birthdays are rarely
+ * tracked) — the mapper/UI render "Unknown" rather than omitting the field.
+ */
+export const SEARCH_CHARACTERS_QUERY = /* GraphQL */ `
+  query SearchCharacters($search: String, $page: Int, $perPage: Int) {
+    Page(page: $page, perPage: $perPage) {
+      pageInfo {
+        hasNextPage
+        total
+      }
+      characters(search: $search, sort: SEARCH_MATCH) {
+        id
+        name {
+          full
+          native
+        }
+        image {
+          large
+        }
+        favourites
+      }
+    }
+  }
+`;
+
+export const POPULAR_CHARACTERS_QUERY = /* GraphQL */ `
+  query PopularCharacters($page: Int, $perPage: Int) {
+    Page(page: $page, perPage: $perPage) {
+      pageInfo {
+        hasNextPage
+        total
+      }
+      characters(sort: FAVOURITES_DESC) {
+        id
+        name {
+          full
+          native
+        }
+        image {
+          large
+        }
+        favourites
+      }
+    }
+  }
+`;
+
+export const CHARACTER_BY_ID_QUERY = /* GraphQL */ `
+  query CharacterById($id: Int) {
+    Character(id: $id) {
+      id
+      name {
+        full
+        native
+        alternative
+      }
+      image {
+        large
+      }
+      description(asHtml: false)
+      siteUrl
+      favourites
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      media(sort: POPULARITY_DESC, perPage: 12) {
+        nodes {
+          id
+          title {
+            romaji
+          }
+          type
+        }
       }
     }
   }

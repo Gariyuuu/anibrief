@@ -77,10 +77,13 @@ export interface RawStaff {
 
 export interface RawCharacter {
   id: number;
-  name: { full: string; native: string | null };
+  name: { full: string; native: string | null; alternative?: string[] };
   image: { large: string | null };
   siteUrl: string;
-  media?: { nodes: { title: { romaji: string | null } }[] };
+  description: string | null;
+  favourites: number | null;
+  dateOfBirth: RawFuzzyDate;
+  media?: { nodes: { id: number; title: { romaji: string | null }; type: "ANIME" | "MANGA" }[] };
 }
 
 export interface RawStudio {

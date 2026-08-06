@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { unfollowTarget } from "@/lib/actions/follows";
 
-type FollowTargetType = "studio" | "person" | "tag" | "genre";
+type FollowTargetType = "studio" | "person" | "character" | "tag" | "genre";
 
 export function UnfollowChip({
   targetType,

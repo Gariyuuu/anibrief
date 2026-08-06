@@ -1,5 +1,38 @@
 # PROJECT_STATE.md — Exact Handoff Snapshot
 
+## SECOND ADDENDUM (2026-08-06, written last, after the first ADDENDUM below)
+
+**The uncommitted Spotify-schema work described in the ADDENDUM immediately below
+has since been committed and pushed**, as `d296f93` ("Add patch-notes link to
+sidebar; add Spotify OAuth connections table") — landing, again, mid-pass, and
+again sweeping up this session's then-unsaved-to-git documentation edits into
+itself (see `SESSION_LOG.md`'s second addendum entry for the full account). **The
+actual current latest commit is `d296f93`, not `91b23c4`** — every reference to
+`91b23c4` as "latest" elsewhere in this file (and the other 16 memory files) was
+accurate at the time it was written but is now one commit behind. Re-run
+`git log --oneline -5` before trusting any specific "latest commit" claim in this
+file's body.
+
+What actually landed in `d296f93`, confirmed via `git show d296f93 --stat`:
+- `src/lib/db/schema/spotify.ts`'s `userSpotifyConnections` table — **committed**,
+  and per the commit message, **pushed to the live database** ("migration 0001...
+  pushed to the live database"). Still no `src/lib/providers/spotify/` provider
+  file and no UI consumer exist (not re-checked after this final commit, but no
+  evidence of either appearing in the commit's file list above).
+- `src/components/layout/AppShell.tsx`'s "What's New / Patch notes" sidebar link —
+  **committed**. This resolves a small, real UI gap: `/whats-new` (which renders
+  `CHANGELOG.md`) existed as a page since the initial release but had no in-app
+  navigation link pointing to it until now.
+
+This documentation was not re-run against `d296f93` as a fresh full pass (that
+would risk chasing an indefinitely-moving target, per the same reasoning the
+original stale-snapshot episode already worked through) — instead, this specific
+addendum plus corresponding short notes in `TASKS.md`, `HANDOFF.md`, `CLAUDE.md`,
+and `SESSION_LOG.md` are the closing account. **Recommended next action for
+whoever reads this:** `git log --oneline -5` first, always.
+
+---
+
 ## ADDENDUM (2026-08-06, written after the rest of this re-sync pass)
 
 **A third wave of concurrent, uncommitted development was observed near the end of

@@ -4,18 +4,28 @@ import {
   AIRING_SCHEDULE_QUERY,
   BROWSE_MEDIA_QUERY,
   CHARACTER_BIRTHDAYS_QUERY,
+  CHARACTER_BY_ID_QUERY,
   MEDIA_BY_ID_QUERY,
+  POPULAR_CHARACTERS_QUERY,
   POPULAR_STAFF_QUERY,
+  SEARCH_CHARACTERS_QUERY,
   SEARCH_MEDIA_QUERY,
   SEARCH_STAFF_QUERY,
   STAFF_BIRTHDAYS_QUERY,
   STAFF_BY_ID_QUERY,
   STUDIO_SEARCH_QUERY,
 } from "@/lib/providers/anilist/queries";
-import { mapCharacterBirthday, mapMedia, mapStaff, type CharacterBirthday } from "@/lib/providers/anilist/mappers";
+import {
+  mapCharacter,
+  mapCharacterBirthday,
+  mapMedia,
+  mapStaff,
+  type CharacterBirthday,
+} from "@/lib/providers/anilist/mappers";
 import type { RawAiringScheduleNode, RawCharacter, RawMedia, RawStaff, RawStudio } from "@/lib/providers/anilist/rawTypes";
 import type { AiringEntry, AiringSeason, MediaFormat, NormalizedMedia } from "@/lib/types/media";
 import type { NormalizedPerson } from "@/lib/types/person";
+import type { NormalizedCharacter } from "@/lib/types/character";
 import { logger } from "@/lib/utils/logger";
 
 type MediaType = "ANIME" | "MANGA";
@@ -257,39 +267,103 @@ export const AniListProvider = {
     );
   },
 
-  async searchStaff(search: string): Promise<NormalizedPerson[]> {
+  async searchStaff(
+    search: string,
+    { page = 1, perPage = 20 }: { page?: number; perPage?: number } = {}
+  ): Promise<{ items: NormalizedPerson[]; hasNextPage: boolean; total: number }> {
     return safe(
       async () => {
-        const data = await anilistFetch<{ Page: { staff: RawStaff[] } }>(
-          SEARCH_STAFF_QUERY,
-          { search, page: 1, perPage: 20 },
-          { revalidate: 600 }
-        );
-        return data.Page.staff.map(mapStaff);
+        const data = await anilistFetch<{
+          Page: { pageInfo: { hasNextPage: boolean; total: number }; staff: RawStaff[] };
+        }>(SEARCH_STAFF_QUERY, { search, page, perPage }, { revalidate: 600 });
+        return {
+          items: data.Page.staff.map(mapStaff),
+          hasNextPage: data.Page.pageInfo.hasNextPage,
+          total: data.Page.pageInfo.total,
+        };
       },
-      [],
+      { items: [], hasNextPage: false, total: 0 },
       "searchStaff"
     );
   },
 
   /**
-   * The most-favorited staff on AniList, paged by favourites. Used as the
-   * honestly-scoped source pool for "upcoming birthdays" — see
-   * POPULAR_STAFF_QUERY's comment for why this can't be a real date-range
-   * birthday query.
+   * The most-favorited staff on AniList, paged by favourites. Also used as
+   * the honestly-scoped source pool for "upcoming birthdays" (call with a
+   * large perPage and ignore pagination) — see POPULAR_STAFF_QUERY's comment
+   * for why upcoming birthdays can't be a real date-range query.
    */
-  async getPopularStaff(perPage = 100): Promise<NormalizedPerson[]> {
+  async getPopularStaff(
+    { page = 1, perPage = 100 }: { page?: number; perPage?: number } = {}
+  ): Promise<{ items: NormalizedPerson[]; hasNextPage: boolean; total: number }> {
     return safe(
       async () => {
-        const data = await anilistFetch<{ Page: { staff: RawStaff[] } }>(
-          POPULAR_STAFF_QUERY,
-          { page: 1, perPage },
-          { revalidate: 3600 }
-        );
-        return data.Page.staff.map(mapStaff);
+        const data = await anilistFetch<{
+          Page: { pageInfo: { hasNextPage: boolean; total: number }; staff: RawStaff[] };
+        }>(POPULAR_STAFF_QUERY, { page, perPage }, { revalidate: 3600 });
+        return {
+          items: data.Page.staff.map(mapStaff),
+          hasNextPage: data.Page.pageInfo.hasNextPage,
+          total: data.Page.pageInfo.total,
+        };
       },
-      [],
+      { items: [], hasNextPage: false, total: 0 },
       "getPopularStaff"
+    );
+  },
+
+  async searchCharacters(
+    search: string,
+    { page = 1, perPage = 24 }: { page?: number; perPage?: number } = {}
+  ): Promise<{ items: NormalizedCharacter[]; hasNextPage: boolean; total: number }> {
+    return safe(
+      async () => {
+        const data = await anilistFetch<{
+          Page: { pageInfo: { hasNextPage: boolean; total: number }; characters: RawCharacter[] };
+        }>(SEARCH_CHARACTERS_QUERY, { search, page, perPage }, { revalidate: 600 });
+        return {
+          items: data.Page.characters.map(mapCharacter),
+          hasNextPage: data.Page.pageInfo.hasNextPage,
+          total: data.Page.pageInfo.total,
+        };
+      },
+      { items: [], hasNextPage: false, total: 0 },
+      "searchCharacters"
+    );
+  },
+
+  /** The most-favorited characters on AniList, paged by favourites — default "browse all" pool for the Characters directory tab. */
+  async getPopularCharacters(
+    { page = 1, perPage = 24 }: { page?: number; perPage?: number } = {}
+  ): Promise<{ items: NormalizedCharacter[]; hasNextPage: boolean; total: number }> {
+    return safe(
+      async () => {
+        const data = await anilistFetch<{
+          Page: { pageInfo: { hasNextPage: boolean; total: number }; characters: RawCharacter[] };
+        }>(POPULAR_CHARACTERS_QUERY, { page, perPage }, { revalidate: 3600 });
+        return {
+          items: data.Page.characters.map(mapCharacter),
+          hasNextPage: data.Page.pageInfo.hasNextPage,
+          total: data.Page.pageInfo.total,
+        };
+      },
+      { items: [], hasNextPage: false, total: 0 },
+      "getPopularCharacters"
+    );
+  },
+
+  async getCharacterById(id: number): Promise<{ character: NormalizedCharacter; raw: RawCharacter } | null> {
+    return safe(
+      async () => {
+        const data = await anilistFetch<{ Character: RawCharacter | null }>(
+          CHARACTER_BY_ID_QUERY,
+          { id },
+          { revalidate: 1800 }
+        );
+        return data.Character ? { character: mapCharacter(data.Character), raw: data.Character } : null;
+      },
+      null,
+      "getCharacterById"
     );
   },
 };

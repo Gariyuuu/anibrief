@@ -10,7 +10,14 @@ interface SearchHit {
   id: string;
   title: string;
   image: string | null;
-  kind: "anime" | "manga";
+  kind: "anime" | "manga" | "person" | "character";
+}
+
+/** Maps a search hit's kind to the route segment it lives under — people/characters don't share the "/kind/id" shape anime/manga use. */
+function hrefForHit(hit: SearchHit): string {
+  if (hit.kind === "person") return `/people/${encodeURIComponent(hit.id)}`;
+  if (hit.kind === "character") return `/characters/${encodeURIComponent(hit.id)}`;
+  return `/${hit.kind}/${encodeURIComponent(hit.id)}`;
 }
 
 /** Cmd/Ctrl+K opens; "/" opens+focuses when nothing else has focus; "g then x" jumps via nav.ts shortcuts. */
@@ -18,7 +25,12 @@ export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ anime: SearchHit[]; manga: SearchHit[] }>({ anime: [], manga: [] });
+  const [results, setResults] = useState<{ anime: SearchHit[]; manga: SearchHit[]; people: SearchHit[]; characters: SearchHit[] }>({
+    anime: [],
+    manga: [],
+    people: [],
+    characters: [],
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingG = useRef(false);
 
@@ -77,7 +89,7 @@ export function CommandPalette() {
     if (query.trim().length < 2) {
       // Clears stale results once the query is too short to search on.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setResults({ anime: [], manga: [] });
+      setResults({ anime: [], manga: [], people: [], characters: [] });
       return;
     }
     const controller = new AbortController();
@@ -97,7 +109,7 @@ export function CommandPalette() {
 
   if (!open) return null;
 
-  const hits = [...results.anime, ...results.manga];
+  const hits = [...results.anime, ...results.manga, ...results.people, ...results.characters];
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24" onClick={() => setOpen(false)}>
@@ -125,7 +137,7 @@ export function CommandPalette() {
               key={hit.id}
               onClick={() => {
                 setOpen(false);
-                router.push(`/${hit.kind}/${encodeURIComponent(hit.id)}`);
+                router.push(hrefForHit(hit));
               }}
               className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-border/40"
             >

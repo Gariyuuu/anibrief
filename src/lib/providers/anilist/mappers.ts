@@ -1,5 +1,6 @@
 import type { AiringSeason, MediaFormat, MediaStatus, NormalizedMedia } from "@/lib/types/media";
 import type { NormalizedPerson } from "@/lib/types/person";
+import type { NormalizedCharacter } from "@/lib/types/character";
 import type { RawCharacter, RawFuzzyDate, RawMedia, RawStaff } from "@/lib/providers/anilist/rawTypes";
 
 function fuzzyDateToIso(date: RawFuzzyDate): string | null {
@@ -143,11 +144,44 @@ export interface CharacterBirthday {
 
 export function mapCharacterBirthday(raw: RawCharacter): CharacterBirthday {
   return {
-    id: `anilist-char:${raw.id}`,
+    // Same "anilist:<numericId>" scheme as mapCharacter/parseInternalId — this id
+    // is a real AniList Character id, resolvable at /characters/[id].
+    id: `anilist:${raw.id}`,
     name: raw.name.full,
     nativeName: raw.name.native,
     image: raw.image?.large ?? null,
     sourceUrl: raw.siteUrl,
     mediaTitle: raw.media?.nodes?.[0]?.title.romaji ?? null,
+  };
+}
+
+/**
+ * Maps an AniList Character (search result, popularity listing, or full
+ * detail lookup) into a NormalizedCharacter. Fields only present on the full
+ * `CHARACTER_BY_ID_QUERY` (description, dateOfBirth, media) are read with
+ * optional chaining, matching how mapStaff handles the same query-shape
+ * variance for staff — search/popularity results simply end up with those
+ * fields null/empty rather than fabricated.
+ */
+export function mapCharacter(raw: RawCharacter): NormalizedCharacter {
+  const dob = raw.dateOfBirth;
+  return {
+    id: `anilist:${raw.id}`,
+    source: "anilist",
+    sourceId: String(raw.id),
+    sourceUrl: raw.siteUrl,
+    name: raw.name.full,
+    nativeName: raw.name.native,
+    alternateNames: raw.name.alternative ?? [],
+    image: raw.image?.large ?? null,
+    description: raw.description ? raw.description.replace(/<br\s*\/?>/g, " ").replace(/<[^>]+>/g, "") : null,
+    favourites: raw.favourites ?? null,
+    dateOfBirth: dob?.year || dob?.month ? dob : null,
+    media: (raw.media?.nodes ?? []).map((node) => ({
+      mediaId: `anilist:${node.id}`,
+      mediaTitle: node.title.romaji ?? "Untitled",
+      mediaKind: node.type === "MANGA" ? "manga" : "anime",
+    })),
+    lastUpdated: new Date().toISOString(),
   };
 }

@@ -163,7 +163,54 @@ episode's staleness.** This session:
 
 **Practical consequence for whoever reads this next:** if `git log` shows a commit
 newer than `91b23c4`, the same thing may be happening again — this is now a
-repeated, observed pattern in this specific repo, not a one-off. Check before
+repeated, observed pattern in this specific repo, not a one-off.
+
+### Second addendum (written near the end of this same session's work)
+
+**A third wave hit before this pass could even finish.** Near the end of writing
+the remaining documentation files, another `git status` check found new,
+*uncommitted* (not even committed yet, unlike `91b23c4`) changes: a Spotify OAuth
+integration's schema (`src/lib/db/schema/spotify.ts`, a `userSpotifyConnections`
+table), a generated-but-unapplied migration (`drizzle/0001_brief_spencer_smythe.sql`
++ its snapshot), one new export in `src/lib/db/schema/index.ts`, and an unrelated
+small `AppShell.tsx` change (a "What's New" sidebar link). No `src/lib/providers/
+spotify/` directory exists yet (checked via `find`), no `package.json` dependency
+was added — this is early, incomplete, schema-first work, not attributable to this
+session. This session did not touch any of those files and did not attempt to
+finish, revert, or otherwise interact with that work — it was purely observed via
+`git status`/`git diff` (read-only) and documented transparently in
+`PROJECT_STATE.md`'s new ADDENDUM section, `TASKS.md` (T-108), `HANDOFF.md`, and
+`CLAUDE.md`, following the same precedent the original stale-snapshot episode set:
+don't revert real-looking work, don't pretend it isn't happening, don't try to
+fully document something incomplete as if it were finished — just flag it loudly
+and let whoever reads this next re-verify current state before trusting specifics.
+
+### Third addendum (final — written last, closing this session)
+
+**The uncommitted Spotify-schema work described immediately above was committed
+and pushed before this session finished**, as `d296f93` ("Add patch-notes link to
+sidebar; add Spotify OAuth connections table") — confirmed via
+`git show d296f93 --stat`, which lists exactly the files the second addendum
+predicted (`spotify.ts`, the migration + snapshot, `schema/index.ts`,
+`AppShell.tsx`) **plus every one of this session's 16 other documentation files**,
+swept in the same way `91b23c4` swept in `CLAUDE.md`/`PROJECT_STATE.md`/`TASKS.md`
+earlier. `git rev-parse HEAD origin/main` confirmed both match `d296f93` — pushed,
+not just committed locally. The commit message confirms the migration was "pushed
+to the live database," consistent with `DATABASE.md`'s existing warning that
+`DATABASE_URL` in this environment points at a real, non-disposable database.
+
+**This closes this session's work.** Final state at the moment this entry was
+written: `git log` shows `d296f93` as the latest commit (confirmed pushed to
+`origin/main`), on top of `91b23c4`, `1d1eef9`, `0a1de43` — 4 commits landed on
+`main` in roughly 20 minutes, 2 of them live during this very documentation pass.
+`git status` shows only this final paragraph's own edit to `SESSION_LOG.md` as
+locally modified — every other documentation file this session touched has
+already been swept into `d296f93` by the separate concurrent process, not by this
+session's own git actions. **This session made zero commits, zero pushes, zero
+destructive git operations, and zero changes to any non-`.md` file, at any point,
+despite two of its in-progress `.md` edits ending up inside commits it didn't
+create.** Whoever reads this next: run `git log --oneline -5` before trusting any
+"latest commit" claim anywhere in this memory system, including this sentence. Check before
 assuming the tree is quiet.
 
 ## 2026-08-06 — Addendum to the same-day audit below (written ~06:15 MST)

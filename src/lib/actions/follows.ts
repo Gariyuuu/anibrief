@@ -14,7 +14,7 @@ async function requireUser() {
   return userId;
 }
 
-export async function followTarget(targetType: "studio" | "person" | "tag" | "genre", targetId: string, targetLabel: string) {
+export async function followTarget(targetType: "studio" | "person" | "character" | "tag" | "genre", targetId: string, targetLabel: string) {
   const userId = await requireUser();
   await db()
     .insert(userFollows)
@@ -23,7 +23,7 @@ export async function followTarget(targetType: "studio" | "person" | "tag" | "ge
   revalidatePath("/profile");
 }
 
-export async function unfollowTarget(targetType: "studio" | "person" | "tag" | "genre", targetId: string) {
+export async function unfollowTarget(targetType: "studio" | "person" | "character" | "tag" | "genre", targetId: string) {
   const userId = await requireUser();
   await db()
     .delete(userFollows)

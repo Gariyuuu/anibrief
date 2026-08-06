@@ -426,12 +426,15 @@ checklist and the two production fixes shipped in `1d1eef9`.
   action have no request-rate protection.
 - **`package.json`'s version field (`0.1.0`) doesn't match `CHANGELOG.md`
   (through `0.1.2`) or the commit messages.**
-- **A third wave of live, uncommitted concurrent development was observed near the
-  end of this documentation pass** — an in-progress Spotify integration (schema +
-  migration, no provider/UI/dependency yet) and a small `AppShell.tsx` sidebar
-  change. Not made by this pass. See `PROJECT_STATE.md`'s ADDENDUM and `TASKS.md`
-  T-108. **Run `git status` before trusting this file's "Current status" section**
-  — this repo has now shown this pattern three times in one day.
+- **A fourth commit, `d296f93`, landed and was pushed during this documentation
+  pass** (after an initial sighting as uncommitted work) — a Spotify OAuth schema
+  (`user_spotify_connections`, pushed to the live database; still no provider/UI)
+  plus a "What's New" sidebar link in `AppShell.tsx`. Not made by this pass. **The
+  actual latest commit as of this pass's end is `d296f93`, not `91b23c4`** — every
+  `91b23c4` reference elsewhere in this file was accurate when written but is now
+  one commit behind. See `PROJECT_STATE.md`'s SECOND ADDENDUM and `TASKS.md`
+  T-108. **Run `git log --oneline -5` before trusting this file's "Current status"
+  section** — this repo shipped 4 commits in roughly 20 minutes today.
 - **No CSP/security-header regression test exists** — the sign-up CAPTCHA breakage
   (commit `91b23c4`) shipped silently because nothing automated checks that the CSP
   allowlists every host the app's own third-party scripts actually load from.

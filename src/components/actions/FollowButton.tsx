@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { followTarget, unfollowTarget } from "@/lib/actions/follows";
 
 export function FollowButton({
+  targetType = "person",
   targetId,
   targetLabel,
   initialFollowing = false,
   size = "sm",
 }: {
+  targetType?: "person" | "character";
   targetId: string;
   targetLabel: string;
   initialFollowing?: boolean;
@@ -39,10 +41,10 @@ export function FollowButton({
     startTransition(async () => {
       try {
         if (following) {
-          await unfollowTarget("person", targetId);
+          await unfollowTarget(targetType, targetId);
           setFollowing(false);
         } else {
-          await followTarget("person", targetId, targetLabel);
+          await followTarget(targetType, targetId, targetLabel);
           setFollowing(true);
         }
       } catch (e) {
