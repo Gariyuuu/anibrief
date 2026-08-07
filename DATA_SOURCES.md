@@ -69,19 +69,52 @@ headline and whatever short snippet the RSS feed itself provides.
 ## YouTube (`src/lib/providers/youtube/`)
 
 Real implementation, gated on `YOUTUBE_API_KEY` (Google Cloud Console → enable "YouTube Data API
-v3"). Without a key, trailer/PV search returns `[]` and the UI shows an explicit "not
-configured" state rather than a guessed/possibly-wrong video embed. When configured, results
-carry the real video ID, channel name, and thumbnail — this app never fabricates or guesses a
-YouTube video ID, since an unverified guess risks silently pointing at the wrong (or no) video.
+v3"). **Currently configured in production.** Without a key, trailer/PV search returns `[]` and
+the UI shows an explicit "not configured" state rather than a guessed/possibly-wrong video
+embed. When configured, results carry the real video ID, channel name, and thumbnail — this app
+never fabricates or guesses a YouTube video ID, since an unverified guess risks silently
+pointing at the wrong (or no) video. `searchAnimeMusic({query, order, maxResults})` (Music
+category, sorted by upload date or view count) powers the Music page's "New this season" and
+"Trending" YouTube sections.
 
-## Music (`src/lib/providers/music/`)
+## Spotify (`src/lib/providers/spotify/`)
 
-No Spotify/MusicBrainz/YouTube-Music credential is configured in this deployment. Rather than
-leaving the Music hub empty, `MusicProvider` serves a small, hand-curated set of real,
-publicly-documented OP/ED song and artist credits (`MusicProvider.configured` is `false`, and
-the Music page leads with a visible "not a live sync" notice). Listen links point to a YouTube
-*search* for the track, not a specific video ID, for the same reason as the YouTube provider
-above — an unverified guessed ID is worse than an honest search link.
+Real Web API implementation, gated on `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`. **Currently
+configured in production.** Two distinct auth modes:
+
+- **Client Credentials** (`client.ts`) — an app-level token used for public reads: track search,
+  playlist search, playlist follower counts. Powers `SpotifyProvider.getCuratedFeed(query,
+  limit)`, which the Music page uses for "New this season" / "Trending" — real tracks from
+  direct Spotify search (Spotify's own relevance ranking, not an AniBrief-computed chart), plus
+  a link to a real, follower-ranked matching playlist for browsing the full thing on Spotify.
+- **Authorization Code** (`oauth.ts`, `src/app/api/spotify/{connect,callback}/route.ts`) — a
+  real per-user OAuth flow (with CSRF `state` verification) that lets a signed-in user connect
+  their own Spotify account (`user_spotify_connections` table) and actually create a playlist on
+  it from the Music page's track selector — a genuine API call, not a link-out.
+
+**Two non-obvious API constraints, discovered by testing directly against Spotify's live API
+(not documented clearly by Spotify itself), that shaped this provider's design:**
+1. Spotify's playlist object names its track-count field `items`, not `tracks` — an easy
+   assumption from other Spotify object shapes that silently broke playlist mapping until
+   caught (see `CHANGELOG.md` 0.2.1).
+2. This app's tier (Client Credentials, not "Extended Quota Mode") caps `/v1/search`'s `limit`
+   at **10 per request** (not the documented 50) and returns `403` on `GET
+   /playlists/{id}/tracks` entirely — confirmed even against Spotify's own official playlists,
+   so it's a blanket policy, not a per-playlist restriction. `SpotifyProvider` works around the
+   first with offset-based pagination (`paginatedSearch`) and around the second by sourcing
+   tracks from search rather than playlist-track-listing; `getPlaylistTracks` is kept intact and
+   correct in the code for if/when this app gets Extended Quota Mode approval, or a connected
+   user's own OAuth token gets threaded through instead of the app token — either would lift the
+   restriction.
+
+## Music curated fallback (`src/lib/providers/music/`)
+
+A small, hand-curated set of real, publicly-documented OP/ED song and artist credits, kept as a
+fallback/supplement to the live Spotify/YouTube feeds above (and as what renders if Spotify/
+YouTube aren't configured in a given deployment). `MusicProvider.configured` is always `false` —
+it's explicitly a static reference set, not a live sync — and the Music page labels it as such.
+Listen links point to a YouTube *search* for the track, not a specific video ID, for the same
+reason as the YouTube provider above.
 
 ## Streaming availability (`src/lib/providers/streaming/`)
 

@@ -13,6 +13,26 @@ retargeted for anime/manga/entertainment.
 Postgres via Drizzle ORM + AniList's public GraphQL API as the primary content source, deployed
 on Vercel.
 
+## Current deployment status (for anyone picking this project up fresh)
+
+Verified live as of this writing — check `vercel env ls production` for the authoritative state,
+this can drift:
+
+- **Vercel project**: `garywangsmes-8349s-projects/anibrief`, connected to
+  `github.com/Gariyuuu/anibrief` (`main` auto-deploys). Deploy manually with `vercel --prod`.
+- **Configured in production**: Clerk (dev-mode instance — see `ENVIRONMENT_VARIABLES.md` about
+  promoting to production mode), Neon `DATABASE_URL` (schema pushed, live), `CRON_SECRET`,
+  `ADMIN_USER_IDS` (set to the account owner's Clerk user id — `/admin` works for that account),
+  `YOUTUBE_API_KEY`, `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`.
+- **Not configured**: `MAL_CLIENT_ID`/`SECRET` (MyAnimeList OAuth), `AI_PROVIDER`/AI keys (daily
+  brief uses its template-fallback summary), `RESEND_API_KEY` (unused — see Known limitations).
+- **Vercel plan is Hobby** — `vercel.json`'s cron jobs run once daily (not every 20–30 min) as a
+  result; see `DEPLOYMENT.md`'s cron-frequency note if that changes.
+- Local secrets for testing live in `.env.local` (gitignored) — `vercel env pull` refreshes it
+  from production, though variables added via `vercel env add` interactively default to
+  "Sensitive," which makes them **write-only** (not retrievable via `pull`/dashboard afterward);
+  re-add with a fresh value rather than trying to recover one that way.
+
 ## Alternate names considered
 
 AniBrief was chosen as the working name. Other names considered during design: **Otaku Brief**,
@@ -44,10 +64,12 @@ configured" state.
   season-by-season browser with sort/format filters.
 - **Anime** (`/anime`) and **Manga** (`/manga`) — search, browse, and rich detail pages
   (Overview, Characters, Staff, Relations, News, Music, Statistics).
-- **Music** (`/music`) — an OST/opening/ending hub with a curated real-song reference set and
-  playlist-style link-outs (never a fake live sync).
-- **People** (`/people`) — voice actor / creator profiles, "Born Today," and an honestly-scoped
-  "Upcoming Birthdays."
+- **Music** (`/music`) — live "New this season" and "Trending" anime-music charts from real
+  YouTube + Spotify search, a curated OP/ED reference set as fallback, a cross-source multi-select
+  playlist builder, and real Spotify playlist creation on your own account (OAuth-connected).
+- **People** (`/people`) — a full, paginated, searchable directory covering both AniList staff
+  (voice actors, directors, authors, composers) and characters, tabs for each, "Born Today," an
+  honestly-scoped "Upcoming Birthdays," and character detail pages (`/characters/[id]`).
 - **Calendar** (`/calendar`) — a unified agenda/month view of episodes, birthdays, and personal
   reminders, exportable as `.ics`.
 - **Discover** (`/discover`) — mood, genre, studio, decade, hidden-gem, and short-anime

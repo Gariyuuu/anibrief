@@ -72,6 +72,7 @@ alerts, follows, saved settings) needs `DATABASE_URL`.
 | `feature_flags` | `admin.ts` | Simple on/off flags, admin-editable. |
 | `announcement_banner` | `admin.ts` | Single-row (`id: "current"`) site-wide banner, admin-editable, rendered in `src/components/layout/AnnouncementBanner.tsx`. |
 | `trend_snapshots` | `admin.ts` | Popularity/score/favourites snapshots captured periodically (`/api/cron/trend-snapshot`) — collects data for a future trend-delta feature. **Not yet surfaced in the UI**: there isn't enough historical depth yet to show an honest "+12% this week" style delta, so none is shown, per the product rule against fabricated trend numbers. |
+| `user_spotify_connections` | `spotify.ts` | Per-user Spotify OAuth tokens (`accessToken`/`refreshToken`/`expiresAt`/`scope`) from the Authorization Code flow — lets a signed-in user's connected account create a real Spotify playlist from the Music page. Never stores a password; `refreshToken` mints new access tokens as they expire. See `DATA_SOURCES.md`'s Spotify section. |
 
 No table stores anime/manga/person metadata itself — that's fetched live from AniList on every
 request (cached via Next's `fetch` `revalidate`) rather than mirrored into Postgres, so there's

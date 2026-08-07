@@ -30,6 +30,29 @@ understanding architecturally, not just as changelog entries:
    data down. **Pattern to reuse:** never pass a function as a prop from a Server
    Component into a Client Component; pass data and let the Client Component own
    any rendering logic that needs a callback.
+3. **CSP silently broke Clerk's sign-up CAPTCHA.** `next.config.ts`'s
+   Content-Security-Policy allowlisted Clerk's own domains but not
+   `challenges.cloudflare.com`, which Clerk's Cloudflare Turnstile bot-protection
+   loads from — every visitor's sign-up failed with "CAPTCHA failed to load," not
+   a browser-specific issue. **Pattern to reuse:** when adding any third-party
+   embed/script (auth widgets, payment forms, analytics), check what domains it
+   actually loads from — not just the vendor's primary domain — before assuming
+   the CSP covers it; a silent CSP block looks identical to the embed itself
+   being broken.
+4. **Spotify's playlist object field name + undocumented rate limits.**
+   `SpotifyProvider` initially read a playlist's track count from `raw.tracks.total`
+   (an easy assumption from other Spotify object shapes); the real field is
+   `raw.items.total`, and the mismatch silently threw and got swallowed into an
+   empty result ("no playlist found"). Separately, this app's Spotify tier caps
+   `/v1/search`'s `limit` at 10 per request (not the documented 50) and returns
+   403 on reading a playlist's actual track listing at all — confirmed even
+   against Spotify's own official playlists via direct `curl` testing, not
+   assumed from docs. Fixed by paginating search with `offset` and sourcing
+   tracks from search results instead of playlist-track-listing (see
+   `DATA_SOURCES.md`'s Spotify section for the full detail). **Pattern to
+   reuse:** when a third-party API returns an empty result unexpectedly, test
+   the raw request directly (`curl`) before assuming it's a config/auth issue —
+   two real, different bugs were hiding behind one generic-looking symptom.
 
 ## Why this structure
 
@@ -66,22 +89,23 @@ anibrief/
       daily-brief/                  Daily Brief page + /archive + /archive/[date]
       news/, airing/, seasonal/       Public MVP browse pages
       anime/[id]/, manga/[id]/         Detail pages with tab sub-routes (characters, staff, relations, news, music, statistics)
-      people/, calendar/, discover/     Discovery surfaces
+      people/, characters/[id]/, calendar/, discover/     Discovery surfaces (people/ covers both AniList staff and characters, tabbed + paginated)
       my-list/, profile/, settings/      Personalization (Clerk-gated)
       alerts/                           Alerts + in-app notifications
-      admin/                            Protected admin dashboard (ADMIN_USER_IDS-gated)
+      admin/                            Protected admin dashboard (ADMIN_USER_IDS-gated at the proxy.ts middleware layer, not just the layout — see "Production fixes" above)
       api/
-        search/                          Command-palette search proxy
+        search/                          Command-palette search proxy (anime/manga/people/characters)
         cron/                             Scheduled jobs (see below)
         calendar/ics/                     .ics export
+        spotify/{connect,callback}/       Spotify OAuth (Authorization Code flow)
     components/
-      ui/                          Card, Button, Badge, Tabs, Skeleton, EmptyState, ErrorState, Avatar
+      ui/                          Card, Button, Badge, Tabs, Pagination, Skeleton, EmptyState, ErrorState, Avatar
       layout/                       AppShell, NavLinks, MobileNav, ThemeToggle, AccentPicker, CommandPalette, AnnouncementBanner
       brand/                        Logo, Mark (original SVG mark — see README for the design rationale)
-      home/, briefing/, news/, anime/, airing/, actions/, admin/, pwa/    Feature-scoped components
+      home/, briefing/, news/, anime/, airing/, people/, music/, actions/, admin/, pwa/    Feature-scoped components (music/ holds the cross-source track selector + Spotify connection card)
     lib/
-      types/                       Normalized domain types (media, person, news, music, briefing, calendarEvent, userList)
-      providers/                    One folder per external data source — see DATA_SOURCES.md
+      types/                       Normalized domain types (media, person, character, news, music, briefing, calendarEvent, userList)
+      providers/                    One folder per external data source, incl. spotify/ (Client Credentials + user OAuth) — see DATA_SOURCES.md
       db/                            Drizzle schema + client — see DATABASE.md
       actions/                        "use server" mutations, Clerk-gated
       ai/                              Swappable Anthropic/OpenAI provider + template fallback

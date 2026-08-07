@@ -1,23 +1,11 @@
 # Deployment
 
-> Re-synced 2026-08-06 ~15:35 MST: this file was already accurate as of the
-> `1d1eef9` commit (it documents that same commit's own changes). Re-verified this
-> pass: `vercel.json`'s 7 cron declarations exactly match the 7 real routes under
-> `src/app/api/cron/*` (re-confirmed via `npm run build`'s route list); the app is
-> confirmed deployed per `README.md`'s live link and this commit's message. **Not
-> independently re-verified this pass:** the actual production Vercel environment
-> variables (would require Vercel dashboard/CLI access this pass didn't use) — in
-> particular, whether `ADMIN_USER_IDS` and `CRON_SECRET` are set in production is
-> unconfirmed; this local environment has neither set. **Also new since the
-> `1d1eef9` deploy:** commit `91b23c4` (landed live during this documentation pass)
-> fixed a real post-deploy bug — the CSP in `next.config.ts` didn't allowlist
-> `challenges.cloudflare.com` (Cloudflare Turnstile, which Clerk's sign-up CAPTCHA
-> loads from), silently breaking sign-up for every visitor. See `SECURITY.md`'s
-> "Security headers" section. If you deploy this app elsewhere or fork it, re-check
-> the CSP allowlist against whatever Clerk features you actually enable.
-
 AniBrief targets **Vercel** (same as its sibling MarketBrief project), with **Clerk** for auth
 and **Neon** for the database. **Live at https://anibrief.vercel.app.**
+
+See `README.md`'s "Current deployment status" section for exactly what's configured in
+production right now (verified via `vercel env ls production`, not assumed) — this doc below is
+the general how-to-deploy reference, not a snapshot of current state.
 
 ## 1. Create the Vercel project
 
@@ -73,9 +61,17 @@ vercel env add CRON_SECRET production
 vercel env add NEXT_PUBLIC_APP_URL production   # e.g. https://your-app.vercel.app
 # Optional:
 vercel env add YOUTUBE_API_KEY production
+vercel env add SPOTIFY_CLIENT_ID production
+vercel env add SPOTIFY_CLIENT_SECRET production   # register <NEXT_PUBLIC_APP_URL>/api/spotify/callback as its Redirect URI in the Spotify Developer Dashboard
 vercel env add AI_PROVIDER production
 vercel env add ANTHROPIC_API_KEY production   # or OPENAI_API_KEY
 ```
+
+Note: env vars added via `vercel env add` in interactive/piped mode default to type
+**"Sensitive"**, which makes them write-only afterward — `vercel env pull`, `vercel env ls`, and
+the dashboard will all show `[SENSITIVE]` instead of the real value. That's a one-way property
+per variable, not a mistake to fix; just know that if you ever need to *recall* a value (not
+just use it), you'll need to re-add it, not retrieve it.
 
 ## 5. Deploy
 
