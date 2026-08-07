@@ -1,5 +1,17 @@
 # FEATURES.md — Feature-by-Feature Status
 
+> **2026-08-07 checkpoint:** "People directory" and "Music" below were stale (still
+> described the pre-`65c44e9` state — no Spotify integration, no staff+characters
+> directory) despite `a0696ef`'s commit message claiming a "Spotify, People/
+> Characters" docs refresh (that commit actually only touched README/ARCHITECTURE/
+> DATABASE/DATA_SOURCES/DEPLOYMENT, not this file — a real gap, now fixed). Both
+> sections rewritten this pass against the current source (`src/app/music/page.tsx`,
+> `src/app/people/page.tsx`, `src/lib/providers/spotify/*`). `main` HEAD is
+> `d69e067`, working tree clean, `typecheck`/`lint`/`test` (24/24)/`build` (52
+> routes) all pass. Every other section below was spot-checked against the current
+> `git log` and code and still holds; not fully line-by-line re-verified again this
+> pass (only the two sections known to be behind actual shipped features).
+
 > Re-synced 2026-08-06 ~15:35 MST against the actual current git state (commit
 > `1d1eef9`, working tree clean). The previous version of this file classified
 > almost everything as "Backend only" / "Planned" / "Schema-only" against a stale,
@@ -193,19 +205,42 @@ dedicated code" (discover) — `/seasonal` is 129 lines, `/discover` is 345 line
 `manga/[id]` has `characters`, `news`, `relations`. All present in the 44-route
 build output.
 
-## People directory (`/people`, `/people/[id]`)
+## People directory (`/people`, `/people/[id]`, `/characters/[id]`)
 
-**Status: Verified complete.** 100-line list page + detail page, using
-`FollowButton` for person-following (see "Follows" above).
+**Status: Verified complete — updated 2026-08-07, was stale.** This section
+described a "100-line list page" before commit `65c44e9` ("0.2.0: ... full People &
+Characters directory") shipped a real, tabbed, paginated (24/page), searchable
+directory: `/people?type=people` (voice actors/directors/authors, AniList staff
+search) and `/people?type=characters` (AniList character search), 180-line
+`src/app/people/page.tsx` + 130-line `src/app/people/[id]/page.tsx`, using
+`PersonCard`/`CharacterCard`/`Pagination`/`Tabs` components. A standalone
+`/characters/[id]` detail route also exists (confirmed in the `npm run build`
+output; not present under `/people/`). `FollowButton` still covers
+person-following (see "Follows" above).
 
 ## Music (`/music`, `anime/[id]/music`)
 
-**Status: Mocked, but now reachable** — status upgraded from the previous pass's
-"Mocked, no UI consumes it at all." `MusicProvider.getCuratedReleases()` is still
-honestly-labeled mock data (`source: "mock"`, `configured: false`, 4 real curated
-songs, YouTube-search links not guessed video IDs) — but it now has two real
-callers (`src/app/music/page.tsx`, `src/app/anime/[id]/music/page.tsx`), so the
-"never wired into any UI" part of the old finding no longer holds.
+**Status: Verified complete — updated 2026-08-07, was stale.** This section
+previously described `MusicProvider.getCuratedReleases()` mock data as the whole
+feature. As of `65c44e9` ("0.2.0")/`c526d86` ("0.2.1"), the Music page also has a
+**real Spotify integration**: `src/lib/providers/spotify/{index,client,oauth}.ts`,
+Client-Credentials search for public feeds plus a real per-user OAuth connect flow
+(`/api/spotify/connect`, `/api/spotify/callback`, `src/lib/actions/spotify.ts`,
+`userSpotifyConnections` table) that lets a signed-in user save selected tracks as
+an actual playlist on their own Spotify account. Two real, separate bugs were found
+and fixed in `c526d86`: Spotify's playlist-search response uses `items` not
+`tracks` for track count (silently caught as empty results), and unapproved
+("Client Credentials") Spotify apps are hard-capped at `limit=10` per search
+request (not the documented 50) and get a blanket `403` reading any playlist's
+track listing — worked around by searching tracks directly (paginated at 10) and
+linking out to real, well-followed playlists by follower count instead of reading
+their contents. Real YouTube "New this season"/"Trending" feeds
+(`YouTubeProvider.searchTrailers`/music search) sit alongside the original 4-song
+hand-curated `MusicProvider` mock data (still honestly labeled `source: "mock"`,
+kept as a fallback section, not replaced). Everything Spotify-shaped degrades to an
+explicit "not configured" state without `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`
+(see `.env.example`) — not verified with real Spotify credentials in this pass
+(out of scope for a documentation checkpoint; no live network calls made).
 
 ## MyAnimeList ranking data
 

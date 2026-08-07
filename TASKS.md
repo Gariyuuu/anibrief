@@ -1,5 +1,20 @@
 # TASKS.md — Active Execution Queue
 
+> **2026-08-07 checkpoint (resolves the note directly below):** `main` is now at
+> `d69e067` ("Add self-hosted goat-ai-platform as a 3rd AI provider option"),
+> matching `origin/main`, working tree clean (verified via `git status`/`git log
+> --oneline -5`/`git fetch origin` this pass). **T-109's code was committed** —
+> `git show d69e067 --stat` includes exactly `src/lib/ai/goat-ai.ts`,
+> `src/lib/ai/index.ts`, `src/lib/ai/types.ts` plus this file's/`PROJECT_STATE.md`'s/
+> `SESSION_LOG.md`'s/`CLAUDE.md`'s/`.env.example`'s/`ENVIRONMENT_VARIABLES.md`'s/
+> `CHANGELOG.md`'s own then-in-progress edits, swept in together — the same
+> concurrent-landing pattern documented repeatedly below. T-109's "Not committed"
+> line immediately below is now **stale**; treat it as "Committed as of `d69e067`."
+> `AI_PROVIDER` still defaults to `"anthropic"` and no production env var changed, so
+> `goat-ai` is still inert unless explicitly configured. Full re-verification this
+> pass: `typecheck`/`lint`/`test` (24/24)/`build` (52 routes) all pass clean. No
+> secrets found in tracked files.
+
 > **2026-08-06 update:** `main` is at `a0696ef` as of this note (five commits ahead
 > of the `91b23c4` this file's body below still describes — run `git log --oneline
 > -5` before trusting any "current commit" reference below). This session's own
@@ -16,7 +31,9 @@
   The `anthropic`/`openai` providers and the null/template fallback are unchanged;
   `AI_PROVIDER` still defaults to `"anthropic"` — nothing activates this
   automatically.
-- **Status:** Complete (code + verification). Not committed.
+- **Status:** Complete (code + verification). **Committed** as of `d69e067` (see the
+  2026-08-07 checkpoint note at the top of this file) — the original "Not committed"
+  line below is stale, kept for the historical record.
 - **Priority:** N/A (explicit user request, out-of-band from the "Next up" gap list
   below).
 - **Relevant files:** `src/lib/ai/types.ts`, `src/lib/ai/goat-ai.ts` (new),

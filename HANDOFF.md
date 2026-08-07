@@ -1,5 +1,18 @@
 # HANDOFF.md — Start Here
 
+> **Final-transfer checkpoint (2026-08-07):** re-verified from a cold read (no prior
+> conversation history). `main` HEAD is `d69e067`, matching `origin/main`, working
+> tree clean — 4 commits past the `d296f93` this file's body below treats as
+> "latest": `65c44e9` (0.2.0 — real Spotify sync, live music charts, full People &
+> Characters directory), `c526d86` (0.2.1 — Spotify playlist-search bugfix),
+> `a0696ef` (docs refresh), `d69e067` (goat-ai third AI provider, opt-in, not
+> activated by default). `npm run typecheck`/`lint` clean, `npm run test` 24/24,
+> `npm run build` succeeds at **52 routes** (was 44 in older sections of this file —
+> corrected). No secrets found in any tracked file (`.env.example` placeholder-only,
+> `.env.local` gitignored and never committed). The "Prompt for the next Claude Code
+> account" section at the bottom of this file has been refreshed to match this
+> state — use that one, not any commit hashes cited in the body above it.
+
 > Re-synced 2026-08-06 ~15:35 MST. The previous version of this file described a
 > pre-commit, mid-flight snapshot ("no reachable pages," "concurrent modification
 > in progress") that is now stale — that work has since been committed
@@ -82,7 +95,7 @@ Two things happened, in order:
 - `npm run typecheck` — clean.
 - `npm run lint` — clean, 0 errors, 0 warnings.
 - `npm run test` — 24/24 pass.
-- `npm run build` — succeeds, 44 routes.
+- `npm run build` — succeeds, 52 routes.
 - **Every route declared in `src/lib/nav.ts` (15 items) has a real page** — home,
   daily brief (+ archive), news, airing, seasonal, anime/manga (+ detail tab
   routes), music, people, calendar, discover, my-list, alerts, profile, settings
@@ -146,7 +159,7 @@ git status                # expect: clean, unless you're resuming mid-documentat
 npm run typecheck          # expect: clean
 npm run lint                 # expect: 0 errors, 0 warnings
 npm run test                  # expect: 24 pass, 0 fail
-npm run build                  # expect: succeeds, ~44 routes
+npm run build                  # expect: succeeds, ~52 routes
 ```
 Do **not** run `npm run db:push` against any database without explicit permission —
 `DATABASE_URL` in this environment points at a real, schema-pushed Neon database, not
@@ -173,37 +186,49 @@ AniBrief, a Next.js 16 daily-briefing app for anime/manga/Japanese music/news, w
 Clerk auth and a Neon+Drizzle database layer. It is deployed and live at
 https://anibrief.vercel.app.
 
-Important context before you start: this repo has real git history now (3 commits on
-`main` as of this note — check `git log --oneline` for the actual current count,
-since a 4th could exist by the time you read this) and a demonstrated, recurring
-pattern of **real concurrent development landing without warning** — twice now, once
-during the original documentation audit and once during the re-sync that produced
-this file, a separate process committed and pushed real work mid-session. Don't
-assume the repo is quiet just because no one told you otherwise; check `git status`
-first, and if you find a commit you don't recognize, investigate before assuming it's
-safe to build on top of or, worse, trying to revert it. An earlier documentation pass
-in this repo's history was written against a stale, mid-flight snapshot taken before
-a large concurrent build had finished landing — if you find any documentation file
-describing "no home page," "no tests," "no cron routes," or "not deployed," that
-content is from that stale pass and has already been corrected once (2026-08-06
-~15:35 MST re-sync) — but re-verify anyway, don't just trust this note.
+State as of the last verified checkpoint (2026-08-07): `main` HEAD is `d69e067`
+("Add self-hosted goat-ai-platform as a 3rd AI provider option"), matching
+`origin/main`, working tree clean. Real shipped features as of that commit: full
+daily-briefing/news/episode-tracking core; Clerk auth; Neon+Drizzle persistence;
+admin dashboard; a real Spotify integration (OAuth connect + Client-Credentials
+search, save-to-playlist) alongside YouTube and hand-curated-mock music feeds; a
+full paginated staff+characters People/Characters directory; three AI providers for
+the daily-brief summary (`anthropic` default, `openai`, `goat-ai` — all optional,
+template-fallback if none configured). `npm run typecheck`/`lint` clean, `npm run
+test` 24/24 pass, `npm run build` succeeds at 52 routes — re-run all four yourself,
+don't trust this number without verifying.
+
+Important context before you start: this repo has a real, demonstrated history of
+documentation drifting behind fast-shipped code — most recently, `FEATURES.md`'s
+"People directory" and "Music" sections were found stale during the 2026-08-07
+checkpoint (still described pre-0.2.0 mock-only state) *despite* an earlier commit
+(`a0696ef`) claiming in its own message to have refreshed "Spotify, People/
+Characters" docs — it had only touched README/ARCHITECTURE/DATABASE/DATA_SOURCES/
+DEPLOYMENT, not FEATURES.md. Lesson: a commit message claiming a docs refresh is not
+proof every doc file was actually touched — check `git show <commit> --stat` before
+trusting a docs-refresh claim. This repo's earlier history (see PROJECT_STATE.md's
+first three addendums, SESSION_LOG.md) also documents several real instances of
+concurrent development landing mid-documentation-pass — if you find a commit you
+don't recognize, investigate before assuming it's safe to build on or reverting it.
 
 After reading those files:
 1. Run `git log --oneline -10` and `git status` — confirm the repo matches what
-   PROJECT_STATE.md describes (branch, latest commit, clean/dirty tree). Flag any
-   difference.
+   PROJECT_STATE.md's newest addendum describes (branch, latest commit, clean/dirty
+   tree). Flag any difference immediately.
 2. Re-run `npm run typecheck && npm run lint && npm run test && npm run build` and
-   confirm they match what CLAUDE.md/TESTING.md/PROJECT_STATE.md report (all should
-   pass clean; build should produce ~44 routes).
+   confirm they match what CLAUDE.md/TESTING.md/PROJECT_STATE.md report — don't just
+   cite the numbers above, verify them yourself.
 3. Read whichever of ARCHITECTURE.md / FEATURES.md / API_REFERENCE.md / DATABASE.md /
-   SECURITY.md / UI_SYSTEM.md / DECISIONS.md is relevant to what you're about to do.
+   SECURITY.md / UI_SYSTEM.md / DECISIONS.md is relevant to what you're about to do,
+   and cross-check its claims against the actual current source for anything you're
+   about to touch or rely on — don't assume a status label is still accurate.
 4. Summarize your understanding of the current state back to me in a few sentences
    before making any changes, and explicitly flag anything in the documentation that
    looks stale or contradicts what you find in the actual code.
-5. Continue from TASKS.md's "Next up" section, or from whatever the user actually
-   asks for — do not assume any feature is unbuilt without checking FEATURES.md's
-   status classification and the actual code first (this repo has a track record of
-   documentation lagging behind fast-moving actual code).
+5. Continue from TASKS.md's "Next up" section (as of this checkpoint: T-101 `zod`
+   runtime validation, T-102 rate limiting, T-103 the caller-supplied-`userId`
+   ownership-check decision — none urgent, none started), or from whatever the user
+   actually asks for.
 6. Preserve the existing architecture (Clerk for auth, Neon+Drizzle for persistence,
    the provider-never-throws / server-action-throws pattern, the
    isDatabaseConfigured()/getAIProvider() graceful-degradation contracts, the
@@ -212,8 +237,10 @@ After reading those files:
    DECISIONS.md.
 7. Remember `DATABASE_URL` in this environment points at a real, schema-pushed Neon
    database (not a disposable scratch one) — never run `db:push`/destructive
-   operations against it without explicit permission.
+   operations against it without explicit permission. Never print, log, or copy
+   `.env.local`'s actual values into any output.
 8. After completing any meaningful work, update PROJECT_STATE.md, TASKS.md, and
    append to SESSION_LOG.md (append — never overwrite prior entries), plus whichever
-   other documentation file(s) your change affects.
+   other documentation file(s) your change affects — and actually verify each file
+   you touch or cite against the real code, the same discipline this checkpoint used.
 ```

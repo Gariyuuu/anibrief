@@ -1,5 +1,22 @@
 # CLAUDE.md — Operating Manual for AniBrief
 
+> **Final-transfer checkpoint (2026-08-07):** re-verified from scratch. `main` HEAD
+> is `d69e067` ("Add self-hosted goat-ai-platform as a 3rd AI provider option"),
+> matching `origin/main`, working tree clean. That's 5 commits past the `91b23c4`
+> the note directly below describes, and includes the `d296f93` (Spotify schema +
+> patch-notes link), `65c44e9` (0.2.0: real Spotify sync, live music charts, People
+> & Characters directory), `c526d86` (0.2.1: Spotify playlist-search bugfix), and
+> `a0696ef` (handoff-docs refresh) commits in between — see `git log --oneline -8`.
+> `npm run typecheck`/`lint` are clean, `npm run test` is 24/24, `npm run build`
+> succeeds at **52 routes** (corrected repo-wide this pass — every doc below that
+> still says "44 routes" was stale). No secrets found in any tracked file. The
+> "Current status" section below still describes the `91b23c4` snapshot and is now
+> two feature releases (Spotify integration, People/Characters directory) plus one
+> AI-provider addition behind reality — see `PROJECT_STATE.md`'s newest addendum,
+> `FEATURES.md`, and `CHANGELOG.md`'s `0.2.0`/`0.2.1` entries for what actually
+> shipped since. Re-run `git log --oneline -5` before trusting any specific commit
+> hash cited anywhere in this file.
+
 > **Re-sync note (2026-08-06, ~15:35 MST):** the previous documentation pass (written
 > ~05:59–06:15 MST the same day) was locked against a snapshot that turned out to be
 > mid-flight — the repo kept growing (concurrent development) right up until it was
@@ -47,7 +64,7 @@ product**, not the early-stage scaffold the earlier documentation pass described
 - **Deployed to Vercel**, live at https://anibrief.vercel.app, with Clerk auth and a
   Neon Postgres database provisioned through Vercel's integration (schema pushed).
 - **Every route in `src/lib/nav.ts` (15 items) has a real `page.tsx`.** `npm run build`
-  produces 44 routes total: 34 `page.tsx` pages (including nested `anime/[id]`/
+  produces 52 routes total: 34 `page.tsx` pages (including nested `anime/[id]`/
   `manga/[id]` tab routes, `daily-brief/archive/[date]`, `settings/import`,
   `sign-in`/`sign-up`), 1 middleware/proxy, the rest API/cron/icon/manifest routes.
   There is no longer a "nothing renders" problem — see `FEATURES.md` for
@@ -66,7 +83,7 @@ product**, not the early-stage scaffold the earlier documentation pass described
   `eslint-disable-next-line` comments (see `ThemeToggle.tsx`, `AccentPicker.tsx`,
   `CommandPalette.tsx`, `EpisodeTimeline.tsx`); the 3 unused-import warnings are gone.
 - **`npm run typecheck` passes clean.**
-- **`npm run build` succeeds** (verified this re-sync; ~44 routes, 11.9s static-page
+- **`npm run build` succeeds** (verified this re-sync; ~52 routes, 11.9s static-page
   generation).
 - **Real security headers exist**: `next.config.ts` sets a Content-Security-Policy
   (scoped to exactly the hosts the app talks to — Clerk, AniList, Jikan, Google
@@ -151,7 +168,7 @@ Run all commands from `/Users/gariyuu/Projects/anibrief`.
 
 ```bash
 npm run dev            # next dev (Turbopack)
-npm run build           # next build — verified this re-sync: succeeds, 44 routes
+npm run build           # next build — verified this re-sync: succeeds, 52 routes
 npm run start            # next start — not exercised this re-sync
 npm run lint              # eslint — verified this re-sync: 0 errors, 0 warnings
 npm run typecheck          # tsc --noEmit — verified this re-sync: passes clean
@@ -377,7 +394,7 @@ fallback). Full detail in `API_REFERENCE.md` and `FEATURES.md`.
   {clusterNews,textSimilarity}.test.ts`, `src/lib/providers/anilist/__tests__/
   mappers.test.ts`, `src/lib/providers/news/__tests__/reliability.test.ts`,
   `src/lib/utils/__tests__/{dates,season}.test.ts`.
-- `npm run build` — **succeeds** (re-verified this pass; 44 routes).
+- `npm run build` — **succeeds** (re-verified this pass; 52 routes).
 - No E2E, no component tests, no CI workflow files found anywhere in the repo (no
   `.github/workflows/`) — see `TESTING.md`.
 

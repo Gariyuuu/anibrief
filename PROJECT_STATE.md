@@ -1,5 +1,41 @@
 # PROJECT_STATE.md — Exact Handoff Snapshot
 
+## FOURTH ADDENDUM (2026-08-07, final-transfer-checkpoint pass — resolves the THIRD ADDENDUM below)
+
+**Re-verified from scratch this pass:** `git log --oneline -5` shows `main` HEAD at
+`d69e067` ("Add self-hosted goat-ai-platform as a 3rd AI provider option"), matching
+`origin/main` exactly (`git fetch origin` returned nothing new), working tree clean
+(`git status`: 0 uncommitted, 0 ahead/behind). **`d69e067` is the same `goat-ai` work
+the THIRD ADDENDUM below describes as "not committed" — it was committed after that
+addendum was written**, in one commit alongside its own doc edits
+(`git show d69e067 --stat`: `src/lib/ai/{goat-ai.ts,index.ts,types.ts}`,
+`.env.example`, `CLAUDE.md`, `ENVIRONMENT_VARIABLES.md`, `CHANGELOG.md`, this file,
+`TASKS.md`, `SESSION_LOG.md`). Treat every "not committed" / "uncommitted" claim
+about the `goat-ai` provider anywhere in this file, `TASKS.md`, or `CLAUDE.md` as
+**stale** — it is committed, pushed, and `AI_PROVIDER` still defaults to
+`"anthropic"` (goat-ai remains opt-in/inert unless explicitly configured).
+
+**Full re-verification this pass:** `npm run typecheck` clean, `npm run lint` clean
+(0/0), `npm run test` 24/24 pass, `npm run build` succeeds — **52 routes** (not 44;
+the route count grew across the Spotify/People-directory work in `65c44e9`/`c526d86`
+and was stale in every doc file that still said 44 — corrected repo-wide this pass).
+**Secret scan of all tracked files** (`git grep` for API-key-shaped patterns,
+`postgres://user:pass@` connection strings, Anthropic/Stripe/Google/AWS key prefixes,
+long assigned token values): no real secrets found — `.env.example` is
+placeholder-only, `.env.local` is gitignored and was never committed (confirmed via
+`git log --all -- .env.local`), and the two `sk-ant-...`/`AIza...` example strings in
+`SECURITY.md`/`SESSION_LOG.md` are illustrative key-format documentation, not real
+keys. **No cross-file contradiction beyond the ones already flagged by this repo's
+own prior addendums was found**; the ones that existed (goat-ai's committed/
+uncommitted status; the 44-vs-52 route count) are fixed by this addendum and the
+repo-wide route-count correction.
+
+**Recommended next action for whoever reads this:** same as always — run
+`git log --oneline -5` and `git status` before trusting anything below, but as of
+this checkpoint there is nothing left over from `d69e067` to reconcile.
+
+---
+
 ## THIRD ADDENDUM (2026-08-06, written after the SECOND ADDENDUM below — real code work, not a doc pass)
 
 **Everything below this addendum (including the SECOND/first ADDENDUMs) is
@@ -211,7 +247,7 @@ gaps like rate limiting, `zod` validation, and a handful of unwired providers).
 - `npm run test` — **24/24 pass, 0 fail** — real tests now exist for
   `clusterNews`/`textSimilarity` (dedup), `mapMedia` (AniList mapper), news
   `reliability`, and `dates`/`season` utils.
-- `npm run build` — succeeds, produces **44 routes**: every one of `nav.ts`'s 15
+- `npm run build` — succeeds, produces **52 routes**: every one of `nav.ts`'s 15
   declared routes has a real `page.tsx` (plus nested tab routes under `anime/[id]`
   and `manga/[id]`, the daily-brief archive, settings/import, sign-in/up), all 7
   `/api/cron/*` routes, `/api/search`, `/api/calendar/ics`, and the generated

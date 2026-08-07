@@ -4,7 +4,7 @@
 > `1d1eef9`, 225 tracked files). The previous version of this file described a
 > ~90-file mid-flight snapshot with "no `page.tsx` at any other path" — that is no
 > longer true; every route below is real and confirmed by the `npm run build`
-> output (44 routes).
+> output (52 routes).
 
 ## Auth & middleware
 
@@ -209,7 +209,7 @@ unchanged assessment.
 ## App-router file-convention routes (`src/app/`)
 
 **Every route in `src/lib/nav.ts` (15 items) now has a real `page.tsx`.** Full list
-per the `npm run build` output (44 routes total):
+per the `npm run build` output (52 routes total):
 
 - `/` (home), `/daily-brief` (+ `/archive`, `/archive/[date]`), `/news`, `/airing`,
   `/seasonal`, `/anime` (+ `/[id]` + 5 tab sub-routes: characters, music, news,

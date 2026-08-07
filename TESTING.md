@@ -186,7 +186,7 @@ now a "before the next release" list rather than a pre-first-release one:
 
 - [x] `npm run typecheck` passes (re-verified this pass).
 - [x] `npm run lint` passes (re-verified this pass: 0 errors, 0 warnings).
-- [x] `npm run build` succeeds (re-verified this pass: 44 routes).
+- [x] `npm run build` succeeds (re-verified this pass: 52 routes).
 - [x] `.env.example` exists and matches `CLAUDE.md`'s env var table (re-verified).
 - [x] `vercel.json`'s cron targets all exist (re-verified: all 7 routes present).
 - [x] Some minimum unit test coverage exists for the pure-function layers
