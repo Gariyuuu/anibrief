@@ -36,11 +36,19 @@ export interface SpotifyPlaylistInfo {
   imageUrl: string | null;
   externalUrl: string;
   trackCount: number;
+  /** Real Spotify follower count — null until a follow-up lookup fetches it (search results don't include it); used to pick and label the genuinely most-popular candidate playlist. */
+  followers: number | null;
 }
 
-/** A well-maintained curator playlist plus its live tracklist — the honest shape behind the "new this season" / "top anime songs" Spotify feeds (see SpotifyProvider.getCuratedFeed). */
+/**
+ * Real tracks from a direct Spotify track search, plus (best-effort) a link
+ * to a genuinely well-followed matching playlist for browsing — the honest
+ * shape behind the "new this season" / "top anime songs" Spotify feeds (see
+ * SpotifyProvider.getCuratedFeed). `playlist` is null when no good playlist
+ * match was found; `tracks` is still real and populated in that case.
+ */
 export interface SpotifyCuratedFeed {
-  playlist: SpotifyPlaylistInfo;
+  playlist: SpotifyPlaylistInfo | null;
   tracks: SpotifyTrack[];
 }
 

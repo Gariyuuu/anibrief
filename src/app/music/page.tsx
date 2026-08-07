@@ -77,8 +77,8 @@ export default async function MusicPage({
     MusicProvider.getCuratedReleases(),
     YouTubeProvider.searchAnimeMusic({ query: seasonQuery, order: "date", maxResults: 12 }),
     YouTubeProvider.searchAnimeMusic({ query: trendingQuery, order: "viewCount", maxResults: 12 }),
-    SpotifyProvider.getCuratedFeed(`anime openings endings ${year}`, 50),
-    SpotifyProvider.getCuratedFeed("top anime songs", 100),
+    SpotifyProvider.getCuratedFeed(seasonQuery, 30),
+    SpotifyProvider.getCuratedFeed(trendingQuery, 50),
     userId ? getSpotifyConnectionStatus(userId) : Promise.resolve({ connected: false, spotifyUserId: null }),
   ]);
 
@@ -144,16 +144,23 @@ export default async function MusicPage({
               spotifyNewFeed ? (
                 <>
                   <p className="text-xs text-muted">
-                    Live tracklist from Spotify&apos;s{" "}
-                    <a href={spotifyNewFeed.playlist.externalUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                      &ldquo;{spotifyNewFeed.playlist.name}&rdquo;
-                    </a>{" "}
-                    playlist by {spotifyNewFeed.playlist.ownerName} — showing {spotifyNewTracks.length} of {spotifyNewFeed.playlist.trackCount} real tracks, not an AniBrief-computed chart.
+                    Real Spotify search results for this season&apos;s OP/ED tracks.
+                    {spotifyNewFeed.playlist && (
+                      <>
+                        {" Browse the full "}
+                        <a href={spotifyNewFeed.playlist.externalUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                          &ldquo;{spotifyNewFeed.playlist.name}&rdquo;
+                        </a>{" "}
+                        playlist by {spotifyNewFeed.playlist.ownerName}
+                        {spotifyNewFeed.playlist.followers != null && ` (${spotifyNewFeed.playlist.followers.toLocaleString()} followers)`}
+                        {" on Spotify."}
+                      </>
+                    )}
                   </p>
                   <TrackGrid tracks={spotifyNewTracks} />
                 </>
               ) : (
-                <ErrorState reason="fetch_failed" message="No matching curator playlist was found on Spotify for this season just now." />
+                <ErrorState reason="fetch_failed" message="Spotify returned no track results for this season's search just now." />
               )
             ) : (
               <ErrorState reason="not_configured" message="SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET aren't set for this deployment, so live Spotify data is unavailable." />
@@ -192,17 +199,23 @@ export default async function MusicPage({
               spotifyTopFeed ? (
                 <>
                   <p className="text-xs text-muted">
-                    Live tracklist from Spotify&apos;s{" "}
-                    <a href={spotifyTopFeed.playlist.externalUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                      &ldquo;{spotifyTopFeed.playlist.name}&rdquo;
-                    </a>{" "}
-                    playlist by {spotifyTopFeed.playlist.ownerName} — showing {spotifyTopTracks.length} of {spotifyTopFeed.playlist.trackCount} real
-                    tracks.
+                    Real Spotify search results for popular anime OP/ED tracks, Spotify&apos;s own search ranking.
+                    {spotifyTopFeed.playlist && (
+                      <>
+                        {" Browse the full "}
+                        <a href={spotifyTopFeed.playlist.externalUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                          &ldquo;{spotifyTopFeed.playlist.name}&rdquo;
+                        </a>{" "}
+                        playlist by {spotifyTopFeed.playlist.ownerName}
+                        {spotifyTopFeed.playlist.followers != null && ` (${spotifyTopFeed.playlist.followers.toLocaleString()} followers)`}
+                        {" on Spotify."}
+                      </>
+                    )}
                   </p>
                   <TrackGrid tracks={spotifyTopTracks} />
                 </>
               ) : (
-                <ErrorState reason="fetch_failed" message="No matching curator playlist was found on Spotify just now." />
+                <ErrorState reason="fetch_failed" message="Spotify returned no track results just now." />
               )
             ) : (
               <ErrorState reason="not_configured" message="SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET aren't set for this deployment, so live Spotify data is unavailable." />

@@ -3,6 +3,25 @@
 All notable changes to AniBrief are documented here. This file also powers the in-app
 "What's New" page (`/whats-new`).
 
+## 0.2.1 — Fix Spotify's "no playlist found" and get real popular tracks
+
+### Fixed
+
+- **Spotify feeds on the Music page showed "no playlist found."** Two real, separate bugs:
+  1. Spotify's playlist search response names its track-count field `items`, not `tracks` —
+     the mapping code read the wrong field name, threw, and got silently caught as an empty
+     result.
+  2. Spotify's Web API restricts unapproved apps ("Client Credentials," not "Extended Quota
+     Mode") to a maximum `limit` of 10 per search request — not the documented 50 — and blocks
+     reading a playlist's actual track listing entirely (`403`, confirmed even against
+     Spotify's own official playlists, so it's a blanket policy, not specific to any one
+     playlist).
+- **Rebuilt around what's actually available**: real anime tracks now come from direct Spotify
+  track search (paginated properly at 10 per request), ranked by Spotify's own search
+  relevance. Each section also links out to a real, well-followed matching playlist (ranked by
+  actual follower count, shown in the UI) for browsing the full thing on Spotify. Verified live:
+  real hits like YOASOBI's "IDOL," real cover art, real follower counts.
+
 ## 0.2.0 — Spotify sync, live music charts, and a full People & Characters directory
 
 ### Added
