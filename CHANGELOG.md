@@ -3,6 +3,21 @@
 All notable changes to AniBrief are documented here. This file also powers the in-app
 "What's New" page (`/whats-new`).
 
+## Unreleased
+
+### Added
+
+- **Third AI provider: `goat-ai`** — a new `GoatAIProvider` (`src/lib/ai/goat-ai.ts`)
+  implementing the same `AIProvider` interface as `AnthropicProvider`/`OpenAIProvider`,
+  backed by a self-hosted, OpenAI-compatible inference platform, reached via the
+  official `openai` npm package pointed at a custom `baseURL`. Selectable via
+  `AI_PROVIDER=goat-ai` + `AI_PLATFORM_API_KEY` (+ optional `AI_PLATFORM_BASE_URL`,
+  defaults to `https://api.gariyuuu.com/v1`); the existing `anthropic`/`openai`
+  providers and the zero-key template fallback are unchanged. **Not activated
+  anywhere by default** — `AI_PROVIDER` still defaults to `"anthropic"`, and no
+  production env var was changed. Functionally verified against the real platform
+  (see `SESSION_LOG.md`'s newest entry).
+
 ## 0.2.1 — Fix Spotify's "no playlist found" and get real popular tracks
 
 ### Fixed

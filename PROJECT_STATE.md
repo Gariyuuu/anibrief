@@ -1,5 +1,52 @@
 # PROJECT_STATE.md — Exact Handoff Snapshot
 
+## THIRD ADDENDUM (2026-08-06, written after the SECOND ADDENDUM below — real code work, not a doc pass)
+
+**Everything below this addendum (including the SECOND/first ADDENDUMs) is
+documentation locked against commit `91b23c4`/`d296f93` and is now several commits
+stale** — `git log --oneline -5` at the start of this session showed `main` at
+`a0696ef` ("Refresh handoff docs for accuracy..."), five commits ahead of what the
+rest of this file describes, with a clean working tree. **Do not trust this file's
+body below for anything except the general shape of the app** — re-verify specifics
+against the live code, same advice every prior addendum has given.
+
+**This session's actual work:** added a third AI provider, `GoatAIProvider`
+(`src/lib/ai/goat-ai.ts`), implementing the existing `AIProvider` interface
+(`src/lib/ai/types.ts`, widened `name` union to include `"goat-ai"`) — same shape as
+`AnthropicProvider`/`OpenAIProvider`, backed by a self-hosted OpenAI-compatible
+platform via the official `openai` npm package (already a dependency — no
+`package.json` change needed) pointed at a custom `baseURL`. Wired into
+`getAIProvider()` (`src/lib/ai/index.ts`) as an additional branch — the
+`anthropic`/`openai` branches and the null/template fallback are untouched and still
+work exactly as before. **Not activated by default anywhere** — `AI_PROVIDER` still
+defaults to `"anthropic"`; production still has no AI key configured (confirmed: the
+`npm run build` in this session hit a real 400 "credit balance too low" from
+Anthropic, because *this shell session's own environment* — not `.env.local`, which
+has no AI-related keys at all — happened to export a real `ANTHROPIC_API_KEY`; that
+error was caught and the build fell back to the template summary exactly as
+designed, which is itself a live demonstration that the null/template fallback
+survives a real API error, not just a missing key).
+
+**Verification:** `npm run typecheck && npm run lint && npm run test && npm run
+build` all pass clean (24/24 tests, build succeeds with the same route count).
+Functionally tested end-to-end outside the Next.js process (plain `node
+--experimental-strip-types --conditions=react-server`, importing the real source
+files via this repo's existing `@/` alias loader) against the real platform with the
+real credentials supplied for this task: `GoatAIProvider.complete()` returned a real
+completion; `getAIProvider()` correctly returns the `goat-ai` instance when
+`AI_PROVIDER=goat-ai` + `AI_PLATFORM_API_KEY` are both set, and correctly falls back
+to `null` when either is missing (three scenarios tested: both set → real completion;
+neither set → null; `AI_PROVIDER=goat-ai` with no key → null). Did **not** start
+`npm run dev` or exercise the feature through an actual page load — the direct-import
+test above was judged sufficient and lower-risk than standing up the dev server with
+a real key in the environment. Files touched: `src/lib/ai/types.ts`,
+`src/lib/ai/goat-ai.ts` (new), `src/lib/ai/index.ts`, `.env.example`, `CLAUDE.md`,
+`ENVIRONMENT_VARIABLES.md`, `CHANGELOG.md`, this file, `TASKS.md`, `SESSION_LOG.md`.
+Not committed — per this task's instructions, commit/push/deploy only on explicit
+request.
+
+---
+
 ## SECOND ADDENDUM (2026-08-06, written last, after the first ADDENDUM below)
 
 **The uncommitted Spotify-schema work described in the ADDENDUM immediately below

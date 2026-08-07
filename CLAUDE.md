@@ -119,9 +119,14 @@ Versions below are copied verbatim from `package.json` at the current commit.
 - **Database:** `@neondatabase/serverless ^0.10.4` (Neon Postgres, HTTP driver) +
   `drizzle-orm ^0.36.4` + `drizzle-kit ^0.28.1` (dev). Live: provisioned via Vercel's
   Neon integration, schema pushed (per the `1d1eef9` commit message).
-- **AI:** `@anthropic-ai/sdk ^0.112.5`, `openai ^6.48.0` — dual-provider, optional,
-  template-fallback if neither key is set. No key configured in this local
-  environment.
+- **AI:** `@anthropic-ai/sdk ^0.112.5`, `openai ^6.48.0` — three providers
+  (`anthropic`, `openai`, `goat-ai`; the latter is the `openai` SDK pointed at a
+  self-hosted OpenAI-compatible endpoint, see `src/lib/ai/goat-ai.ts`), selected via
+  `AI_PROVIDER`, optional, template-fallback if no matching key is set. **Not
+  currently configured in production** — the live app runs the daily-brief summary
+  in template-fallback mode; verified locally with real credentials for `goat-ai`
+  only, and only outside this file's normal `.env.local` (see `SESSION_LOG.md`'s
+  newest entry).
 - **Email:** `resend ^6.18.0` is a dependency but is still **not integrated** — zero
   send call sites in `src/`. `NotificationsForm.tsx` says so explicitly in its own UI
   copy ("up yet (`resend` is installed but not integrated)"). The Daily Brief's
@@ -318,8 +323,9 @@ in what you need; the app runs with zero variables set (AniList needs no key).
 | `ADMIN_USER_IDS` | Optional | Server | Comma-separated Clerk user ids allowed into `/admin`, in addition to `profiles.isAdmin` |
 | `MAL_CLIENT_ID`, `MAL_CLIENT_SECRET` | Optional, currently no-op | Server | Gates `MyAnimeListProvider`, whose methods are still unconditional stubs |
 | `YOUTUBE_API_KEY` | Optional | Server | Enables real trailer/PV search; empty results without it |
-| `AI_PROVIDER` (+ `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`) | Optional | Server | AI-written Daily Brief summary; template fallback otherwise |
+| `AI_PROVIDER` (+ `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `AI_PLATFORM_API_KEY`) | Optional | Server | AI-written Daily Brief summary; template fallback otherwise. Set to `"anthropic"` (default), `"openai"`, or `"goat-ai"` |
 | `ANTHROPIC_MODEL`, `OPENAI_MODEL` | Optional | Server | Model overrides (defaults `claude-sonnet-5` / `gpt-4o-mini`) |
+| `AI_PLATFORM_API_KEY`, `AI_PLATFORM_BASE_URL` | Optional | Server | Credentials for `AI_PROVIDER=goat-ai` — a self-hosted, OpenAI-compatible platform (`src/lib/ai/goat-ai.ts`). `AI_PLATFORM_BASE_URL` defaults to `https://api.gariyuuu.com/v1` if unset. Model name (`"Yuu no Sekai"`) is fixed, not env-configurable |
 | `CRON_SECRET` | Optional but recommended before a public deploy | Server | Bearer-token guard on `/api/cron/*`; Vercel Cron sends it automatically once set |
 | `NEXT_PUBLIC_APP_URL` | Optional (defaults to `http://localhost:3000`) | Client | Absolute link/share/OG base URL |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Not currently used | — | Reserved for a future email-digest feature; zero call sites in `src/` today |

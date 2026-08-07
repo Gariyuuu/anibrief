@@ -1,4 +1,4 @@
 export interface AIProvider {
-  name: "anthropic" | "openai";
+  name: "anthropic" | "openai" | "goat-ai";
   complete(prompt: string, opts?: { maxTokens?: number }): Promise<string>;
 }

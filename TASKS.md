@@ -1,5 +1,48 @@
 # TASKS.md — Active Execution Queue
 
+> **2026-08-06 update:** `main` is at `a0696ef` as of this note (five commits ahead
+> of the `91b23c4` this file's body below still describes — run `git log --oneline
+> -5` before trusting any "current commit" reference below). This session's own
+> work — see T-109 — is real code, not a documentation-only pass, and is
+> **uncommitted** as of this note (not committed/pushed/deployed per explicit task
+> instructions).
+
+### T-109 — Add `goat-ai` as a third, opt-in AI provider
+
+- **Description:** Added `GoatAIProvider` (`src/lib/ai/goat-ai.ts`), implementing
+  the existing `AIProvider` interface, backed by a self-hosted OpenAI-compatible
+  platform (official `openai` npm package, custom `baseURL`). Selectable via
+  `AI_PROVIDER=goat-ai` + `AI_PLATFORM_API_KEY` (+ optional `AI_PLATFORM_BASE_URL`).
+  The `anthropic`/`openai` providers and the null/template fallback are unchanged;
+  `AI_PROVIDER` still defaults to `"anthropic"` — nothing activates this
+  automatically.
+- **Status:** Complete (code + verification). Not committed.
+- **Priority:** N/A (explicit user request, out-of-band from the "Next up" gap list
+  below).
+- **Relevant files:** `src/lib/ai/types.ts`, `src/lib/ai/goat-ai.ts` (new),
+  `src/lib/ai/index.ts`, `.env.example`, `CLAUDE.md`, `ENVIRONMENT_VARIABLES.md`,
+  `CHANGELOG.md`.
+- **Dependencies:** none — `openai` was already a `package.json` dependency
+  (`^6.48.0`, added for `OpenAIProvider`).
+- **Acceptance criteria:** `AIProvider.name` union widened to include `"goat-ai"`;
+  new provider matches `AnthropicProvider`'s `complete()` signature and return shape;
+  `getAIProvider()` gains one additional `else if` branch, existing branches and the
+  null fallback untouched; `typecheck`/`lint`/`test`/`build` all pass; provider
+  functionally tested against the real platform with real credentials.
+- **Validation steps:** `npm run typecheck && npm run lint && npm run test && npm
+  run build` — all pass (24/24 tests). Direct-import functional test (outside
+  Next.js, via `node --experimental-strip-types --conditions=react-server` +
+  this repo's existing `@/` alias loader) against the real self-hosted platform:
+  real completion returned; `getAIProvider()` correctly selects `goat-ai` when both
+  env vars are set and correctly falls back to `null` otherwise (3 scenarios).
+- **Blockers:** none.
+- **Deliberately not done:** did not start `npm run dev` / load an actual page —
+  the direct-import test above already exercises the real network call and the
+  fallback logic; standing up the dev server with a real key in-process wasn't
+  judged to add meaningful additional confidence for this task's scope. Did not
+  set `AI_PROVIDER=goat-ai` in any real env file — the task explicitly reserves
+  that decision for the user.
+
 > Re-synced 2026-08-06 ~15:35 MST against the actual current git state (`main`,
 > now at commit `91b23c4` — a third commit that landed live during this very
 > re-sync pass, see `SESSION_LOG.md`). The previous version of this file was
@@ -194,7 +237,9 @@ None outstanding beyond this pass's own deliverables.
 
 ## Recently completed
 
-- **This session:** documentation re-sync (T-005) — see `SESSION_LOG.md`.
+- **This session (2026-08-06, real code):** T-109 — added `goat-ai` as a third,
+  opt-in AI provider. See `SESSION_LOG.md`'s newest entry.
+- **Earlier session:** documentation re-sync (T-005) — see `SESSION_LOG.md`.
 - **Commit `91b23c4`** (landed live during this documentation session, authored by
   a separate process — see `SESSION_LOG.md`): fixed a CSP gap that silently broke
   sign-up's Cloudflare Turnstile CAPTCHA for every visitor.

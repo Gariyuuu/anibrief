@@ -1,6 +1,7 @@
 import "server-only";
 import { AnthropicProvider } from "@/lib/ai/anthropic";
 import { OpenAIProvider } from "@/lib/ai/openai";
+import { GoatAIProvider } from "@/lib/ai/goat-ai";
 import type { AIProvider } from "@/lib/ai/types";
 import { logger } from "@/lib/utils/logger";
 
@@ -20,6 +21,8 @@ export function getAIProvider(): AIProvider | null {
     cached = new AnthropicProvider();
   } else if (providerName === "openai" && process.env.OPENAI_API_KEY) {
     cached = new OpenAIProvider();
+  } else if (providerName === "goat-ai" && process.env.AI_PLATFORM_API_KEY) {
+    cached = new GoatAIProvider();
   } else {
     logger.info("getAIProvider: no AI key configured, using template fallback", { providerName });
     cached = null;

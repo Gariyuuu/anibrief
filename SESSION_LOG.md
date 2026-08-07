@@ -1,5 +1,124 @@
 # SESSION_LOG.md — Chronological AI Session Log
 
+## 2026-08-06 — Add `goat-ai` as a third, opt-in AI provider (real code, not a doc pass)
+
+- **Account/agent:** Claude Code session.
+- **Starting state check (per this repo's own working instructions):** ran
+  `git log --oneline -5` and `git status` before assuming anything — `main` at
+  `a0696ef` ("Refresh handoff docs for accuracy (Spotify, People/Characters, deploy
+  state)"), working tree clean. This is five commits ahead of `91b23c4`, the commit
+  every prior version of `CLAUDE.md`/`PROJECT_STATE.md`/`TASKS.md` still describes
+  as "current" — confirms this repo's documented pattern of shipping multiple
+  commits per session and docs lagging behind. Did not attempt a full re-sync of the
+  17-file system against `a0696ef` (out of scope for this task; would also risk
+  chasing a moving target per this repo's own established reasoning) — only added
+  targeted, accurate notes about this session's own work.
+- **Task:** wire a new `AI_PROVIDER=goat-ai` option into the existing
+  `AIProvider` abstraction (`src/lib/ai/types.ts`/`anthropic.ts`/`openai.ts`/
+  `index.ts`), backed by a self-hosted, OpenAI-compatible inference platform
+  (`https://api.gariyuuu.com/v1`, model name `"Yuu no Sekai"`), using the official
+  `openai` npm package already present as a dependency.
+- **Context confirmed before starting:** production has no AI key configured — the
+  daily brief summary currently always runs in template-fallback mode live. This
+  task activates a new *option*, not an existing live integration — lower risk, but
+  still real deployed-app code.
+- **Files read first:** `CLAUDE.md`, `PROJECT_STATE.md`, `TASKS.md` in full;
+  `src/lib/ai/types.ts`, `anthropic.ts`, `openai.ts`, `index.ts` directly (not
+  assumed from prior docs).
+- **Changes made:**
+  1. `src/lib/ai/types.ts` — widened `AIProvider["name"]` to
+     `"anthropic" | "openai" | "goat-ai"`.
+  2. `src/lib/ai/goat-ai.ts` (new) — `GoatAIProvider implements AIProvider`,
+     `name = "goat-ai"`, same `complete(prompt, opts)` signature as
+     `AnthropicProvider`. Uses `new OpenAI({ apiKey: process.env.AI_PLATFORM_API_KEY,
+     baseURL: process.env.AI_PLATFORM_BASE_URL ?? "https://api.gariyuuu.com/v1" })`,
+     sends `model: "Yuu no Sekai"` (exact string, per platform requirement) and
+     `reasoning: { enabled: false }` (not in the `openai` SDK's TS request types —
+     silenced with a targeted `@ts-expect-error` on that one line, not a blanket
+     cast), and extracts `completion.choices[0]?.message?.content?.trim()`, mirroring
+     `OpenAIProvider.complete()` exactly.
+  3. `src/lib/ai/index.ts` — added one `else if (providerName === "goat-ai" &&
+     process.env.AI_PLATFORM_API_KEY)` branch between the existing `openai` branch
+     and the final `else` (null/template fallback). The `anthropic`/`openai`
+     branches and the fallback branch are byte-identical to before this change.
+  4. `package.json` — **no change**; `openai ^6.48.0` was already a dependency
+     (added when `OpenAIProvider` was built), confirmed via `grep` before assuming
+     it needed adding.
+  5. `.env.example` — documented `AI_PROVIDER=goat-ai` as a third option alongside
+     `anthropic`/`openai`, and added `AI_PLATFORM_API_KEY`/`AI_PLATFORM_BASE_URL`
+     with a default-URL comment. Existing rows untouched.
+  6. `CLAUDE.md` — updated the env var table (added a `goat-ai` row, widened the
+     `AI_PROVIDER` row's description) and the tech-stack `AI:` bullet to mention the
+     third provider and restate — explicitly, since this file's existing text was
+     ambiguous/stale on the point — that no AI key is configured in production
+     today.
+  7. `ENVIRONMENT_VARIABLES.md` — same env var table update, matching `.env.example`
+     and `CLAUDE.md`.
+  8. `CHANGELOG.md` — new `## Unreleased` section (this repo's changelog previously
+     had no such section; every prior entry maps 1:1 to a shipped, versioned
+     release) documenting the new provider as added-but-not-activated.
+  9. `PROJECT_STATE.md`, `TASKS.md` (T-109) — see those files' own new entries for
+     detail; not duplicated here.
+- **Verification — mandatory checks, all re-run by this session, not cited from a
+  prior pass:**
+  - `npm run typecheck` — passes clean (0 errors).
+  - `npm run lint` — passes clean (0 errors, 0 warnings).
+  - `npm run test` — **24/24 pass, 0 fail** (unchanged from before this session —
+    no existing test imports the AI provider layer, so nothing regressed and
+    nothing new was exercised by the existing suite; this repo has no automated
+    coverage for `src/lib/ai/*` before or after this change).
+  - `npm run build` — succeeds, same 44-route shape as before. Notably, this build
+    made a **real** call to the Anthropic API and got a real `400` ("credit balance
+    too low") — not because production/`.env.local` has a key (`.env.local` was
+    checked by variable *name only*, per this repo's rule against reading secret
+    values, and has no `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`/`AI_PROVIDER` entries at
+    all), but because *this specific shell session's own environment* happened to
+    export a real `ANTHROPIC_API_KEY` (confirmed via `env | grep`, value never
+    printed). `buildDailyBriefing` caught the error and fell back to the template
+    summary exactly as `getAIProvider()`/`buildBriefing.ts` are designed to —
+    incidental but genuine evidence that the fallback path survives a real API
+    *error*, not just a *missing* key.
+  - **Functional end-to-end test of the new provider, with real credentials, against
+    the real platform** (this task's "if practical" verification bar): could not use
+    `import "server-only"` code through `npm run dev`'s browser-facing flow within
+    this session's time/scope without standing up a full page load, so instead ran
+    the actual `src/lib/ai/goat-ai.ts` and `src/lib/ai/index.ts` source files
+    directly via `node --experimental-strip-types --conditions=react-server --import
+    ./scripts/register-loader.mjs` (this repo's own existing test-runner machinery,
+    which already resolves the `@/` alias to real files under `src/` — the
+    `--conditions=react-server` flag is what makes the `server-only` marker package
+    resolve to its no-op `empty.js` instead of throwing outside Next's bundler,
+    exactly as it does inside a real Server Component). Three scenarios, in a
+    scratchpad script outside the repo (never committed, never touched `src/`):
+    1. `AI_PROVIDER=goat-ai` + real `AI_PLATFORM_API_KEY` set →
+       `getAIProvider().name === "goat-ai"`, and `.complete("Reply with exactly:
+       ok", { maxTokens: 20 })` returned the real string `"ok"` from
+       `https://api.gariyuuu.com/v1`.
+    2. Nothing AI-related set → `getAIProvider()` returned `null` (template
+       fallback), logging `"no AI key configured"` — unchanged behavior.
+    3. `AI_PROVIDER=goat-ai` with **no** `AI_PLATFORM_API_KEY` → also `null` — the
+       new branch's guard condition works correctly, doesn't accidentally construct
+       a client with an undefined key.
+    Also called `GoatAIProvider` directly (not just via `getAIProvider()`) with the
+    prompt "Reply with exactly the two words: hello world" and got back the exact
+    string `"hello world"`, confirming `reasoning: { enabled: false }` doesn't break
+    the request and the response-extraction line matches the real response shape.
+  - **Not done:** did not run `npm run dev` and click through an actual Daily Brief
+    page load with `AI_PROVIDER=goat-ai` set. Reported honestly as not done, per
+    this task's explicit instruction to say so rather than imply full verification.
+- **Not done, per explicit task instructions:** no `git add`/`git commit`/`git
+  push`/deploy. No changes to Clerk auth, the Neon schema, cron routes, or anything
+  outside `src/lib/ai/*` and the documentation files listed above. Did not set
+  `AI_PROVIDER=goat-ai` (or any other AI env var) in any real `.env.local`/Vercel
+  config — that activation decision is explicitly the user's to make separately.
+- **Secrets handling:** the `AI_PLATFORM_API_KEY` value used for the functional test
+  was supplied directly in this task's instructions (not read from any repo file)
+  and was only ever passed as a process-level env var to short-lived, uncommitted
+  scratchpad scripts outside this repository — never written into any file inside
+  `anibrief/`, never printed in full in any doc file above.
+
+---
+
 ## 2026-08-06 — Documentation re-sync (full re-verification pass, ~15:35 MST)
 
 - **Account/agent:** Claude Code session, model Sonnet 5.
