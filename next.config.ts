@@ -49,6 +49,18 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "image-cdn-ak.spotifycdn.com" },
       { protocol: "https", hostname: "image-cdn-fa.spotifycdn.com" },
     ],
+    // Every remote image this app renders (AniList cover/character/staff art,
+    // YouTube thumbnails, Spotify cover art) is already a small, pre-sized,
+    // CDN-compressed image served by its own origin — there is no oversized
+    // original for Vercel's Image Optimization pipeline to usefully shrink.
+    // Combined with AniList's effectively unbounded catalog (every anime,
+    // character, and staff member has a unique image URL that's never been
+    // seen before) and card/banner `sizes` that resolve to the full 8-entry
+    // deviceSizes array, every fresh page (including ones only a crawler ever
+    // visits) was minting a large batch of brand-new billed transformations.
+    // `unoptimized` sends the original CDN URL straight to the browser —
+    // same bytes, same responsiveness via `sizes`/`fill`, zero Vercel spend.
+    unoptimized: true,
   },
   async headers() {
     return [
