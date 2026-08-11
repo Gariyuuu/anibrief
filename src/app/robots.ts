@@ -17,20 +17,21 @@ export default function robots(): MetadataRoute.Robots {
         "/profile",
         "/settings",
         "/alerts",
-        // Per-id tab routes (characters/staff/relations/statistics/news/music)
-        // multiply the crawlable surface of every single anime/manga id
-        // several times over for near-duplicate content of low standalone
-        // SEO value — keep only the main /anime/[id] and /manga/[id]
-        // overview pages indexable.
-        "/anime/*/characters",
-        "/anime/*/staff",
-        "/anime/*/relations",
-        "/anime/*/statistics",
-        "/anime/*/news",
-        "/anime/*/music",
-        "/manga/*/characters",
-        "/manga/*/relations",
-        "/manga/*/news",
+        // Per-id detail pages (and all their tab subroutes) sit behind an
+        // effectively unbounded AniList id space — tens of thousands of
+        // anime/manga/characters/staff, each with unique art. A crawler
+        // walking these mints a guaranteed cache-miss, AniList-hitting
+        // render for every previously-unseen id it reaches (this drove a
+        // real cost incident — see ANIBRIEF_VERCEL_COST_AUDIT.md). Blocking
+        // the whole `/anime/*`, `/manga/*`, `/people/*`, `/characters/*`
+        // subtrees (not just the tabs) is what actually caps that cost; the
+        // bounded, genuinely-cacheable browse/list pages below stay
+        // crawlable (`/anime`, `/manga`, `/people`, `/discover`,
+        // `/seasonal`, `/news`, `/airing`, `/calendar`, `/music`, `/`).
+        "/anime/*",
+        "/manga/*",
+        "/people/*",
+        "/characters/*",
       ],
     },
   };

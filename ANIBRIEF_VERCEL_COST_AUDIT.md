@@ -1,5 +1,70 @@
 # AniBrief Vercel Cost Incident
 
+## Incident 2 (2026-08-11): cache-miss storm → Function invocation spike
+
+**This is a different incident from the one below** (that one was Image
+Optimization billing, fixed in `6e158cb`; this one is Function invocations,
+via a retry-storm bug plus an incomplete crawler block from that same fix).
+Cost: ~$10.
+
+**Observed:** Data/edge cache hit rates dropped to near zero on the per-id
+detail routes while invocations spiked; total incoming request volume stayed
+flat; same deployment served traffic before/throughout (rules out a bad
+deploy); outbound calls to `graphql.anilist.co` spiked, almost all 429s,
+already elevated before the spike; inbound traffic was dominated by Meta's
+`meta-externalagent` crawler at a steady rate (not a traffic increase).
+
+**Root cause (two compounding bugs, not one):**
+1. `src/lib/providers/anilist/client.ts` retried every AniList call 3×
+   (800ms/1600ms backoff) **including on 429**. AniList's shared budget is
+   ~30 req/min for the whole app; retrying a 429 spends more of an
+   already-exhausted budget and prolongs the outage for every other
+   concurrent render. A failed render is never cached (Next only caches `ok`
+   fetches), so the next request for that same page repeated the entire
+   3× storm — this is why cache hit rate collapsed toward zero while
+   invocations spiked with flat incoming traffic.
+2. The Incident 1 `robots.ts` fix blocked the per-id **tab** subroutes
+   (`characters`, `staff`, `relations`, …) but left `/anime/[id]`,
+   `/manga/[id]`, `/people/[id]`, and `/characters/[id]` **themselves**
+   crawlable — the actual unbounded id space. `meta-externalagent` walking
+   those mints a guaranteed-fresh, guaranteed-AniList-hitting render for
+   every previously-unseen id, all day, every day.
+
+**Fixes applied:**
+- `src/lib/utils/retry.ts` — `withRetry` now accepts `shouldRetry(error)`;
+  a 429 is no longer retried, it fails fast.
+- `src/lib/providers/anilist/client.ts` — a 429 now trips a process-wide
+  60s cooldown (`rateLimitedUntil`); any call during that window fails
+  immediately without hitting AniList at all, capping outbound calls during
+  a rate-limit event instead of every concurrent render retrying it.
+- `src/app/robots.ts` — disallow is now `/anime/*`, `/manga/*`, `/people/*`,
+  `/characters/*` (the whole unbounded subtree, not just the tabs). Bounded
+  browse/list pages (`/anime`, `/manga`, `/people`, `/discover`, `/seasonal`,
+  `/news`, `/airing`, `/calendar`, `/music`, `/`) stay crawlable.
+- `src/proxy.ts` — active enforcement: known AI-training/scraper user agents
+  (`meta-externalagent`, `GPTBot`, `CCBot`, `Bytespider`, `ClaudeBot`,
+  `anthropic-ai`, `PerplexityBot`, `Amazonbot`, `Google-Extended`) get a 403
+  on the unbounded-catalog routes, since `robots.txt` only restrains bots
+  that choose to honor it — this was flagged as "the next layer" in
+  Incident 1's "Remaining Risks" and never built until now. Real search
+  crawlers (Googlebot/Bingbot) are not blocked.
+
+**Verification:** `npm run typecheck && npm run lint && npm run test && npm
+run build` all pass, 52 routes. Not yet deployed/observed in production —
+watch the next AniList rate-limit event (if any) to confirm invocations no
+longer spike.
+
+**Residual risk:** the circuit-breaker cooldown is per-Lambda-instance
+in-memory state, not shared across concurrent instances — under Vercel's
+scale-out, multiple instances can each independently rate-limit-and-cooldown
+rather than sharing one global cooldown. This is a real gap, not a full
+guarantee; it still caps each instance's amplification to ~1 retry-storm
+instead of unbounded ones, and the robots.txt + UA-block layer is the
+actual hard cap on request volume regardless.
+
+---
+
+
 ## Observed Problem
 
 Approximately $15 of unexpected Vercel usage generated rapidly, including usage

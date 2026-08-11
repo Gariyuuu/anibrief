@@ -4,6 +4,28 @@ import { isAdminUser } from "@/lib/utils/adminAccess";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
+// Same unbounded-id-space routes robots.ts disallows (see the comment there
+// and ANIBRIEF_VERCEL_COST_AUDIT.md): tens of thousands of AniList
+// anime/manga/character/staff ids, each a guaranteed cache-miss on first
+// crawl. robots.txt only restrains crawlers that choose to honor it, so this
+// is the active-enforcement layer for known AI-training/scraper bots (not
+// real search engines — Googlebot/Bingbot are deliberately left alone, they
+// still have real SEO value and are what a prior fix's `robots.txt` change
+// was written to keep working).
+const isUnboundedCatalogRoute = createRouteMatcher(["/anime/(.*)", "/manga/(.*)", "/people/(.*)", "/characters/(.*)"]);
+
+const BLOCKED_BOT_USER_AGENTS = [
+  "meta-externalagent", // Meta's AI-training crawler — confirmed dominant traffic source in the cost incident
+  "gptbot",
+  "ccbot",
+  "bytespider",
+  "claudebot",
+  "anthropic-ai",
+  "perplexitybot",
+  "amazonbot",
+  "google-extended",
+];
+
 // /admin also redirects non-admins at the page/layout level (src/app/admin/layout.tsx),
 // but that check alone isn't sufficient here: in this Next.js version, a `redirect()`
 // thrown partway through an async Server Component layout does not reliably stop an
@@ -17,6 +39,13 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 // fetch-based and Edge-runtime-safe, so calling it from middleware is fine, and it
 // already degrades to `false` (not a throw) when DATABASE_URL isn't configured.
 export default clerkMiddleware(async (auth, req) => {
+  if (isUnboundedCatalogRoute(req)) {
+    const userAgent = req.headers.get("user-agent")?.toLowerCase() ?? "";
+    if (BLOCKED_BOT_USER_AGENTS.some((bot) => userAgent.includes(bot))) {
+      return new NextResponse("Blocked", { status: 403 });
+    }
+  }
+
   if (isAdminRoute(req)) {
     const { userId } = await auth();
     if (!(await isAdminUser(userId))) {
