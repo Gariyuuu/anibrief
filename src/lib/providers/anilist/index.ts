@@ -75,7 +75,7 @@ export const AniListProvider = {
       async () => {
         const data = await anilistFetch<{
           Page: { pageInfo: { hasNextPage: boolean; total: number }; media: RawMedia[] };
-        }>(SEARCH_MEDIA_QUERY, { search, type, page, perPage }, { revalidate: 300 });
+        }>(SEARCH_MEDIA_QUERY, { search, type, page, perPage }, { revalidate: 172800 });
         return {
           items: data.Page.media.map(mapMedia),
           hasNextPage: data.Page.pageInfo.hasNextPage,
@@ -93,7 +93,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Media: RawMedia | null }>(
           MEDIA_BY_ID_QUERY,
           { id },
-          { revalidate: 1800 }
+          { revalidate: 172800 }
         );
         return data.Media ? mapMedia(data.Media) : null;
       },
@@ -108,7 +108,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Media: RawMedia | null }>(
           MEDIA_BY_ID_QUERY,
           { id },
-          { revalidate: 1800 }
+          { revalidate: 172800 }
         );
         return data.Media;
       },
@@ -173,7 +173,7 @@ export const AniListProvider = {
             startDate_lesser: startDateLesser,
             episodes_lesser: episodesLesser,
           },
-          { revalidate: 900 }
+          { revalidate: 172800 }
         );
         return {
           items: data.Page.media.map(mapMedia),
@@ -208,7 +208,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Studio: RawStudio | null }>(
           STUDIO_SEARCH_QUERY,
           { search, page, perPage },
-          { revalidate: 1800 }
+          { revalidate: 172800 }
         );
         if (!data.Studio) return { studio: null, items: [], hasNextPage: false, total: 0 };
         return {
@@ -231,7 +231,7 @@ export const AniListProvider = {
         }>(
           AIRING_SCHEDULE_QUERY,
           { airingAtGreater: startSec, airingAtLesser: endSec, page: 1, perPage },
-          { revalidate: 300 }
+          { revalidate: 172800 }
         );
         return data.Page.airingSchedules.map((node) => ({
           mediaId: `anilist:${node.media.id}`,
@@ -251,7 +251,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Page: { staff: RawStaff[] } }>(
           STAFF_BIRTHDAYS_QUERY,
           { page: 1, perPage: 25 },
-          { revalidate: 3600 }
+          { revalidate: 172800 }
         );
         return data.Page.staff.map(mapStaff);
       },
@@ -266,7 +266,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Page: { characters: RawCharacter[] } }>(
           CHARACTER_BIRTHDAYS_QUERY,
           { page: 1, perPage: 25 },
-          { revalidate: 3600 }
+          { revalidate: 172800 }
         );
         return data.Page.characters.map(mapCharacterBirthday);
       },
@@ -278,7 +278,7 @@ export const AniListProvider = {
   async getStaffById(id: number): Promise<{ person: NormalizedPerson; raw: RawStaff } | null> {
     return safe(
       async () => {
-        const data = await anilistFetch<{ Staff: RawStaff | null }>(STAFF_BY_ID_QUERY, { id }, { revalidate: 1800 });
+        const data = await anilistFetch<{ Staff: RawStaff | null }>(STAFF_BY_ID_QUERY, { id }, { revalidate: 172800 });
         return data.Staff ? { person: mapStaff(data.Staff), raw: data.Staff } : null;
       },
       null,
@@ -294,7 +294,7 @@ export const AniListProvider = {
       async () => {
         const data = await anilistFetch<{
           Page: { pageInfo: { hasNextPage: boolean; total: number }; staff: RawStaff[] };
-        }>(SEARCH_STAFF_QUERY, { search, page, perPage }, { revalidate: 600 });
+        }>(SEARCH_STAFF_QUERY, { search, page, perPage }, { revalidate: 172800 });
         return {
           items: data.Page.staff.map(mapStaff),
           hasNextPage: data.Page.pageInfo.hasNextPage,
@@ -319,7 +319,7 @@ export const AniListProvider = {
       async () => {
         const data = await anilistFetch<{
           Page: { pageInfo: { hasNextPage: boolean; total: number }; staff: RawStaff[] };
-        }>(POPULAR_STAFF_QUERY, { page, perPage }, { revalidate: 3600 });
+        }>(POPULAR_STAFF_QUERY, { page, perPage }, { revalidate: 172800 });
         return {
           items: data.Page.staff.map(mapStaff),
           hasNextPage: data.Page.pageInfo.hasNextPage,
@@ -339,7 +339,7 @@ export const AniListProvider = {
       async () => {
         const data = await anilistFetch<{
           Page: { pageInfo: { hasNextPage: boolean; total: number }; characters: RawCharacter[] };
-        }>(SEARCH_CHARACTERS_QUERY, { search, page, perPage }, { revalidate: 600 });
+        }>(SEARCH_CHARACTERS_QUERY, { search, page, perPage }, { revalidate: 172800 });
         return {
           items: data.Page.characters.map(mapCharacter),
           hasNextPage: data.Page.pageInfo.hasNextPage,
@@ -359,7 +359,7 @@ export const AniListProvider = {
       async () => {
         const data = await anilistFetch<{
           Page: { pageInfo: { hasNextPage: boolean; total: number }; characters: RawCharacter[] };
-        }>(POPULAR_CHARACTERS_QUERY, { page, perPage }, { revalidate: 3600 });
+        }>(POPULAR_CHARACTERS_QUERY, { page, perPage }, { revalidate: 172800 });
         return {
           items: data.Page.characters.map(mapCharacter),
           hasNextPage: data.Page.pageInfo.hasNextPage,
@@ -377,7 +377,7 @@ export const AniListProvider = {
         const data = await anilistFetch<{ Character: RawCharacter | null }>(
           CHARACTER_BY_ID_QUERY,
           { id },
-          { revalidate: 1800 }
+          { revalidate: 172800 }
         );
         return data.Character ? { character: mapCharacter(data.Character), raw: data.Character } : null;
       },

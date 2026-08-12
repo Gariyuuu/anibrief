@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
 
 export const metadata: Metadata = { title: "Calendar" };
-export const revalidate = 600;
+export const revalidate = 172800; // 2 days
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view: rawView } = await searchParams;

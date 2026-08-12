@@ -21,7 +21,7 @@ import { SelectableTrackCard } from "@/components/music/SelectableTrackCard";
 import { SpotifyConnectionCard } from "@/components/music/SpotifyConnectionCard";
 
 export const metadata: Metadata = { title: "Music" };
-export const revalidate = 3600;
+export const revalidate = 172800; // 2 days
 
 const THEME_ORDER: ThemeType[] = ["opening", "ending", "insert", "ost", "character_song", "single", "album"];
 const THEME_LABELS: Record<ThemeType, string> = {

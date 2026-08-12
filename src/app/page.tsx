@@ -10,7 +10,7 @@ import type { NormalizedMedia } from "@/lib/types/media";
 import type { NormalizedPerson } from "@/lib/types/person";
 import type { CharacterBirthday } from "@/lib/providers/anilist/mappers";
 
-export const revalidate = 300;
+export const revalidate = 172800; // 2 days
 
 export default async function HomePage() {
   const briefing = await getTodaysBriefing();

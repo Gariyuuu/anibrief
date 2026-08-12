@@ -3,7 +3,7 @@ import { getAnimeDetail } from "@/lib/providers/anilist/getAnimeDetail";
 import { AnimeDetailHeader } from "@/components/anime/AnimeDetailHeader";
 import { Card } from "@/components/ui/Card";
 
-export const revalidate = 1800;
+export const revalidate = 172800; // 2 days
 
 export default async function AnimeStatisticsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

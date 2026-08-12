@@ -68,7 +68,7 @@ async function authedFetch(url: URL): Promise<Response | null> {
   return withRetry(() =>
     fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 3600 },
+      next: { revalidate: 172800 },
     })
   );
 }

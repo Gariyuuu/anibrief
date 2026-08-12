@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Users } from "lucide-react";
 
-export const revalidate = 1800;
+export const revalidate = 172800; // 2 days
 
 export default async function AnimeStaffPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

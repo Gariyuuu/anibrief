@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils/cn";
 import type { AiringSeason, MediaFormat } from "@/lib/types/media";
 
 export const metadata: Metadata = { title: "Seasonal Anime" };
-export const revalidate = 3600;
+export const revalidate = 172800; // 2 days
 
 const SORT_OPTIONS: { id: MediaSort; label: string }[] = [
   { id: "POPULARITY_DESC", label: "Popularity" },

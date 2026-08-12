@@ -3,7 +3,7 @@ import { DailyBriefView } from "@/components/briefing/DailyBriefView";
 import { getTodaysBriefing } from "@/lib/briefing/getTodaysBriefing";
 
 export const metadata: Metadata = { title: "Daily Brief" };
-export const revalidate = 300;
+export const revalidate = 172800; // 2 days
 
 export default async function DailyBriefPage() {
   const briefing = await getTodaysBriefing();
