@@ -36,13 +36,31 @@ export type MediaSort =
   | "START_DATE_DESC"
   | "FAVOURITES_DESC";
 
-async function safe<T>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> {
+// Per-lambda-instance last-good-result cache (same "not shared across concurrent
+// instances" caveat as client.ts's rate-limit cooldown — still meaningfully cuts
+// how often a warm instance shows an empty section during an AniList outage). Only
+// worth it for high-traffic, call-site-stable queries like `browse` (a handful of
+// season/year/sort/format combos, hit constantly) — not wired into every `safe()`
+// caller, since most (searchMedia, getMediaById, ...) have effectively unbounded
+// cache keys where this would just leak memory for no real hit-rate benefit.
+const lastGood = new Map<string, { data: unknown; ts: number }>();
+const LAST_GOOD_MAX_AGE_MS = 30 * 60_000;
+
+async function safe<T>(fn: () => Promise<T>, fallback: T, label: string, cacheKey?: string): Promise<T> {
   try {
-    return await fn();
+    const result = await fn();
+    if (cacheKey) lastGood.set(cacheKey, { data: result, ts: Date.now() });
+    return result;
   } catch (error) {
     logger.error(`AniListProvider.${label} failed`, {
       error: error instanceof Error ? error.message : String(error),
     });
+    if (cacheKey) {
+      const cached = lastGood.get(cacheKey);
+      if (cached && Date.now() - cached.ts < LAST_GOOD_MAX_AGE_MS) {
+        return cached.data as T;
+      }
+    }
     return fallback;
   }
 }
@@ -164,7 +182,8 @@ export const AniListProvider = {
         };
       },
       { items: [], hasNextPage: false, total: 0 },
-      "browse"
+      "browse",
+      JSON.stringify({ type, season, seasonYear, sort, genres, tags, formats, status, page, perPage, startDateGreater, startDateLesser, episodesLesser })
     );
   },
 
