@@ -14,7 +14,7 @@ interface FeedItem {
   isoDate?: string;
 }
 
-const REVALIDATE_SECONDS = 172800; // 2 days
+const REVALIDATE_SECONDS = 86400; // 24h
 const parser = new Parser<unknown, FeedItem>();
 
 // Source registry, stored here (not hardcoded per-call) so categories can be

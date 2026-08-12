@@ -5,7 +5,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { MusicProvider } from "@/lib/providers/music";
 import { Card } from "@/components/ui/Card";
 
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 export default async function AnimeMusicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

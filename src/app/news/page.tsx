@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils/cn";
 import type { NewsCategory } from "@/lib/types/news";
 
 export const metadata: Metadata = { title: "News" };
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 const TABS: { id: string; label: string }[] = [
   { id: "latest", label: "Latest" },

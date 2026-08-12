@@ -9,7 +9,7 @@ import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { upcomingBirthdays } from "@/lib/utils/birthdays";
 
 export const metadata: Metadata = { title: "People" };
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 type DirectoryType = "people" | "characters";
 

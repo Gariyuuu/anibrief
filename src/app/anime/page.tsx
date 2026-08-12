@@ -5,7 +5,7 @@ import { AnimeGrid } from "@/components/anime/AnimeGrid";
 import { cn } from "@/lib/utils/cn";
 
 export const metadata: Metadata = { title: "Anime" };
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 const SORT_OPTIONS: { id: MediaSort; label: string }[] = [
   { id: "POPULARITY_DESC", label: "Popularity" },

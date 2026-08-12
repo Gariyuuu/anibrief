@@ -4,7 +4,7 @@ import { AnimeDetailHeader } from "@/components/anime/AnimeDetailHeader";
 import { NewsList } from "@/components/news/NewsList";
 import { NewsFeedProvider } from "@/lib/providers/news";
 
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 export default async function MangaNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

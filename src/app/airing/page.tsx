@@ -5,7 +5,7 @@ import { AiringByDay } from "@/components/airing/AiringByDay";
 import { cn } from "@/lib/utils/cn";
 
 export const metadata: Metadata = { title: "Airing Schedule" };
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 const RANGE_DAYS: Record<string, number> = { today: 1, tomorrow: 1, week: 7 };
 

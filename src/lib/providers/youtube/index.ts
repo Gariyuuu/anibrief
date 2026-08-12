@@ -36,7 +36,7 @@ export const YouTubeProvider = {
       url.searchParams.set("maxResults", String(maxResults));
       url.searchParams.set("key", process.env.YOUTUBE_API_KEY!);
 
-      const res = await fetch(url, { next: { revalidate: 172800 } });
+      const res = await fetch(url, { next: { revalidate: 86400 } });
       if (!res.ok) throw new Error(`YouTube API request failed: ${res.status}`);
       const json = await res.json();
 
@@ -93,7 +93,7 @@ export const YouTubeProvider = {
       url.searchParams.set("maxResults", String(maxResults));
       url.searchParams.set("key", process.env.YOUTUBE_API_KEY!);
 
-      const res = await fetch(url, { next: { revalidate: 172800 } });
+      const res = await fetch(url, { next: { revalidate: 86400 } });
       if (!res.ok) throw new Error(`YouTube API request failed: ${res.status}`);
       const json = await res.json();
 

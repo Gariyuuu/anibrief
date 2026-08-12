@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BookOpen } from "lucide-react";
 
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 async function loadCharacter(id: string) {
   const decoded = decodeURIComponent(id);

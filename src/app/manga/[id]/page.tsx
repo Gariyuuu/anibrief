@@ -8,7 +8,7 @@ import { AnimeGrid } from "@/components/anime/AnimeGrid";
 import { mapMedia } from "@/lib/providers/anilist/mappers";
 import { Card } from "@/components/ui/Card";
 
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

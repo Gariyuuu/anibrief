@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import type { PersonRole } from "@/lib/types/person";
 
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 const ROLE_LABEL: Record<PersonRole, string> = {
   voice_actor: "Voice actor",

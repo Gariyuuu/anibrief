@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 import { ANILIST_GENRES } from "@/lib/constants/genres";
 
 export const metadata: Metadata = { title: "Discover" };
-export const revalidate = 172800; // 2 days
+export const revalidate = 86400; // 24h
 
 /**
  * Mood/tag names referenced below were verified live against AniList's
