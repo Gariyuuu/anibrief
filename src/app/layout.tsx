@@ -18,17 +18,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description =
+  "A daily briefing terminal for anime, manga, Japanese music, and voice-actor news, episode tracking, and discovery.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
     default: "AniBrief — Your daily briefing for anime, manga, music, and more",
     template: "%s · AniBrief",
   },
-  description:
-    "A daily briefing terminal for anime, manga, Japanese music, and voice-actor news, episode tracking, and discovery.",
+  description,
   applicationName: "AniBrief",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "AniBrief" },
+  openGraph: {
+    type: "website",
+    siteName: "AniBrief",
+    title: "AniBrief — Your daily briefing for anime, manga, music, and more",
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AniBrief — Your daily briefing for anime, manga, music, and more",
+    description,
+  },
 };
 
 // Runs before paint to avoid a light-mode/wrong-accent flash on load.

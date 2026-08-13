@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 
-// No sitemap is declared here on purpose: a sitemap enumerating every
-// AniList anime/manga/character/staff id would hand crawlers exactly the
-// kind of exhaustive id list that drove the image/render cost incident this
-// file exists to prevent. Discovery stays link-based, which naturally caps
-// how deep a well-behaved crawler goes.
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://anibrief.vercel.app";
+
+// sitemap.ts intentionally lists ONLY the bounded browse pages below (13 URLs) — never
+// the AniList id space. That distinction, not "no sitemap at all," is what actually
+// prevents the render-cost incident this file was written to guard against: a crawler
+// enumerating every anime/manga/character/staff id, each a guaranteed cache-miss. See
+// ANIBRIEF_VERCEL_COST_AUDIT.md and sitemap.ts's own comment for the full rationale.
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -34,5 +36,6 @@ export default function robots(): MetadataRoute.Robots {
         "/characters/*",
       ],
     },
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
