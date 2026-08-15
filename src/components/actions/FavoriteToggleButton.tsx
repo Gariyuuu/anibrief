@@ -19,10 +19,12 @@ export function FavoriteToggleButton({
   const router = useRouter();
   const [favorite, setFavorite] = useState(isFavorite);
   const [pending, startTransition] = useTransition();
+  const [popKey, setPopKey] = useState(0);
 
   function handleClick() {
     const next = !favorite;
     setFavorite(next);
+    setPopKey((k) => k + 1);
     startTransition(async () => {
       try {
         if (kind === "anime") {
@@ -45,7 +47,7 @@ export function FavoriteToggleButton({
       aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
       className="shrink-0 text-muted transition-colors hover:text-accent disabled:opacity-60"
     >
-      <Star className={cn("h-4 w-4", favorite && "fill-accent text-accent")} />
+      <Star key={popKey} className={cn("h-4 w-4 favorite-pop", favorite && "fill-accent text-accent")} />
     </button>
   );
 }

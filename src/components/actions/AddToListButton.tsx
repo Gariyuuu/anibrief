@@ -56,7 +56,7 @@ export function AddToListButton({
   return (
     <div className="flex flex-col items-start gap-1">
       <Button variant="secondary" size={size} onClick={handleClick} disabled={pending || added}>
-        {added ? <Check className="h-3.5 w-3.5" /> : <ListPlus className="h-3.5 w-3.5" />}
+        {added ? <Check className="h-3.5 w-3.5 check-pop" /> : <ListPlus className="h-3.5 w-3.5" />}
         {added ? "On your list" : pending ? "Adding…" : "Add to list"}
       </Button>
       {error && <p className="text-xs text-negative">{error}</p>}
