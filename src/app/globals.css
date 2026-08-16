@@ -140,11 +140,41 @@ body {
   opacity: 0.05;
 }
 
+/* Independently implemented — own timing/easing values, not copied from any
+   third-party pattern library (see kinetics.colorion.co's license: null). */
+@keyframes favorite-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.favorite-pop {
+  animation: favorite-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.check-pop {
+  animation: check-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Loading affordances are exempt from the blanket kill above: reduced
+     motion means less vestibular trigger, not less feedback. Without this,
+     the blanket rule fast-forwards Tailwind's animate-pulse to its 100%
+     keyframe (opacity: 1) and freezes the skeleton into a static block —
+     visible, but no longer signaling "in progress." */
+  .animate-pulse {
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
   }
 }

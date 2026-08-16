@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { UploadCloud, FileCheck2 } from "lucide-react";
+import { ThinkingOrb } from "thinking-orbs";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -193,6 +194,7 @@ export function ImportWizard() {
               {actionError && <p className="text-xs text-negative">{actionError}</p>}
               <div>
                 <Button variant="primary" size="sm" disabled={pending} onClick={handleGeneratePreview}>
+                  {pending && <ThinkingOrb state="searching" size={20} aria-label="Matching titles" />}
                   {pending ? "Matching titles…" : "Generate preview"}
                 </Button>
               </div>
@@ -250,6 +252,7 @@ export function ImportWizard() {
 
           <div className="flex gap-2">
             <Button variant="primary" size="sm" disabled={pending || matchedCount === 0} onClick={handleCommit}>
+              {pending && <ThinkingOrb state="working" size={20} aria-label="Importing" />}
               {pending ? "Importing…" : `Commit import (${matchedCount})`}
             </Button>
             <Button variant="secondary" size="sm" disabled={pending} onClick={reset}>
